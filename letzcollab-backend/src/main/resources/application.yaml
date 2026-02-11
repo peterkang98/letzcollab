@@ -1,3 +1,23 @@
 spring:
   application:
     name: letzcollab-backend
+
+  profiles:
+    active: local
+
+  messages:
+    fallback-to-system-locale: false
+
+  datasource:
+    url: jdbc:h2:mem:letzcollabdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+
+  jpa:
+    hibernate:
+      ddl-auto: create
