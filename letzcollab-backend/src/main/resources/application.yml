@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: letzcollab-backend
+
+  profiles:
+    active: local
+
+  messages:
+    fallback-to-system-locale: false
+
+frontend:
+  base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
