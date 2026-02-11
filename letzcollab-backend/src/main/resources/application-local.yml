@@ -1,0 +1,26 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:letzcollabdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+
+  mail:
+    host: localhost
+    port: 1025
+    username: local-test@letzcollab.xyz
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: true
+        debug: true
