@@ -56,4 +56,13 @@ public class ApiResponse<T> {
 						  .errorCode(errorCode.getCode())
 						  .build();
 	}
+
+	public static <T> ApiResponse<T> fail(ErrorCode errorCode, T data) {
+		return ApiResponse.<T>builder()
+						  .success(false)
+						  .message(errorCode.getMessage())
+						  .errorCode(errorCode.getCode())
+						  .data(data)
+						  .build();
+	}
 }
