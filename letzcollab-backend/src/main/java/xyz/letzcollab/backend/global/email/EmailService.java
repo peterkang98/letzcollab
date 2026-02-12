@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import xyz.letzcollab.backend.global.email.context.EmailContext;
+import xyz.letzcollab.backend.global.exception.CustomException;
+import xyz.letzcollab.backend.global.exception.ErrorCode;
 
 import java.io.UnsupportedEncodingException;
 
@@ -41,7 +43,7 @@ public class EmailService {
 			mailSender.send(message);
 		} catch (MessagingException | UnsupportedEncodingException e) {
 			log.error("메일 발송 실패 - 수신자: {}, 제목: {}", to, emailContext.getSubject());
-			throw new RuntimeException("메일 발송 중 오류가 발생했습니다: " + e.getMessage(), e);
+			throw new CustomException(ErrorCode.EMAIL_SEND_ERROR, e);
 		}
 	}
 }
