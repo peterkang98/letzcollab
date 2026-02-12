@@ -4,13 +4,14 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import xyz.letzcollab.backend.global.email.context.EmailContext;
+
+import java.io.UnsupportedEncodingException;
 
 @Service
 @RequiredArgsConstructor
@@ -19,8 +20,8 @@ public class EmailService {
 	private final JavaMailSender mailSender;
 	private final TemplateEngine templateEngine;
 
-	@Value("${spring.mail.username}")
-	private String fromEmail;
+	private static final String fromEmail = "no-reply@mail.letzcollab.xyz";
+	private static final String fromPersonalName = "LetzCollab";
 
 	public void sendTemplateEmail(String to, EmailContext emailContext) {
 		try {
@@ -32,13 +33,14 @@ public class EmailService {
 
 			String htmlContent = templateEngine.process(emailContext.getTemplateName(), context);
 
-			helper.setFrom(fromEmail);
+			helper.setFrom(fromEmail, fromPersonalName);
 			helper.setTo(to);
 			helper.setSubject(emailContext.getSubject());
 			helper.setText(htmlContent, true);
 
 			mailSender.send(message);
-		} catch (MessagingException e) {
+		} catch (MessagingException | UnsupportedEncodingException e) {
+			log.error("메일 발송 실패 - 수신자: {}, 제목: {}", to, emailContext.getSubject());
 			throw new RuntimeException("메일 발송 중 오류가 발생했습니다: " + e.getMessage(), e);
 		}
 	}
