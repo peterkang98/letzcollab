@@ -13,6 +13,7 @@ public enum ErrorCode {
 	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C003", "서버 내부 오류가 발생했습니다."),
 	NOT_FOUND(HttpStatus.NOT_FOUND, "C004", "요청한 리소스를 찾을 수 없습니다."),
 	INVALID_TYPE_VALUE(HttpStatus.BAD_REQUEST, "C005", "데이터 타입이 올바르지 않습니다."),
+	INVALID_JSON_FORMAT(HttpStatus.BAD_REQUEST, "C006", "잘못된 형식의 JSON 요청입니다."),
 
 	// --- Auth (A) ---
 	UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "A001", "인증되지 않은 사용자입니다."),
