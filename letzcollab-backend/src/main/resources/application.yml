@@ -26,3 +26,7 @@ spring:
 
 frontend:
   base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
+
+jwt:
+  secret: ${JWT_ENC_KEY}
+  access-validity-in-ms: ${JWT_ACCESS_EXP_TIME}
