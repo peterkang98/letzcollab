@@ -4,6 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -20,11 +23,31 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(CustomException.class)
 	public ResponseEntity<ApiResponse<Void>> handleCustomException(CustomException e) {
 		ErrorCode errorCode = e.getErrorCode();
-		log.warn("커스텀 예외 발생: {} - {}", errorCode, e.getMessage());
+		log.warn("커스텀 예외 발생: {} - {}", errorCode.getCode(), e.getMessage());
 
 		return ResponseEntity.status(errorCode.getStatus())
 							 .body(ApiResponse.fail(errorCode));
 	}
+
+	// -- Spring Security 관련 예외 --
+	@ExceptionHandler(BadCredentialsException.class)
+	public ResponseEntity<ApiResponse<Void>> handleBadCredentialsException(BadCredentialsException e) {
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+							 .body(ApiResponse.fail(ErrorCode.BAD_CREDENTIALS));
+	}
+
+	@ExceptionHandler(DisabledException.class)
+	public ResponseEntity<ApiResponse<Void>> handleDisabledException(DisabledException e) {
+		return ResponseEntity.status(HttpStatus.FORBIDDEN)
+							 .body(ApiResponse.fail(ErrorCode.DISABLED));
+	}
+
+	@ExceptionHandler(LockedException.class)
+	public ResponseEntity<ApiResponse<Void>> handleLockedException(LockedException e) {
+		return ResponseEntity.status(HttpStatus.FORBIDDEN)
+							 .body(ApiResponse.fail(ErrorCode.LOCKED));
+	}
+	// ----
 
 	// @Valid 검증 예외 + 객체 바인딩 예외 (@RequestBody, @ModelAttribute 공통 처리)
 	@ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})
