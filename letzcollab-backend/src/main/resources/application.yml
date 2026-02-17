@@ -30,3 +30,7 @@ frontend:
 jwt:
   secret: ${JWT_ENC_KEY}
   access-validity-in-ms: ${JWT_ACCESS_EXP_TIME}
+
+users:
+  admin:
+    password: ${ADMIN_PW}
