@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${title}"></title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; background-color: #f4f7fa;">
+<table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+  <tr>
+    <td align="center" style="padding: 40px 0 20px 0; background-color: #4F46E5;">
+      <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">Letz Collab</h1>
+    </td>
+  </tr>
+
+  <tr>
+    <td style="padding: 40px 30px;">
+      <h2 style="margin: 0 0 20px 0; font-size: 20px; color: #1f2937;">안녕하세요, <span th:text="${name}" style="color: #4F46E5; font-weight: 700;">사용자</span>님!</h2>
+      <p style="margin: 0 0 30px 0; font-size: 16px; line-height: 1.6; color: #4b5563;" th:utext="${content}"></p>
+
+      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+          <td align="center">
+            <a th:href="${link}" th:text="|${title}하기|" style="display: inline-block; padding: 16px 36px; background-color: #4F46E5; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; transition: background-color 0.3s ease;"></a>
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin: 30px 0 0 0; font-size: 14px; color: #9ca3af; text-align: center;">
+        이 링크는 <strong>30분간 유효</strong>합니다.
+      </p>
+    </td>
+  </tr>
+
+  <tr>
+    <td style="padding: 20px 30px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; text-align: center;">
+      <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+        &copy; 2026 Letz Collab. All rights reserved.<br>
+      </p>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
