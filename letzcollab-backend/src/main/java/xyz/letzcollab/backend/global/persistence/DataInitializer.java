@@ -34,11 +34,19 @@ public class DataInitializer implements CommandLineRunner {
 		User dummyUser2 = User.createDummyUser(
 				"peter",
 				"peter8790@naver.com",
+				passwordEncoder.encode("123456"),
+				"010-8765-4321"
+		);
+
+		User adminUser = User.createAdminUser(
+				"admin",
+				"admin@letzcollab.xyz",
 				passwordEncoder.encode(adminPassword),
-				"010-2345-4321"
+				"010-1234-5678"
 		);
 
 		userRepository.save(dummyUser);
 		userRepository.save(dummyUser2);
+		userRepository.save(adminUser);
 	}
 }
