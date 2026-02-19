@@ -53,8 +53,7 @@ public class AuthService {
 		VerificationToken token = VerificationToken.createEmailVerificationToken(user);
 		tokenRepository.save(token);
 
-		VerifyEmailContext emailContext = new VerifyEmailContext(req.name(), token.getToken(), frontendURL);
-		emailService.sendTemplateEmail(req.email(), emailContext);
+		sendVerificationEmail(req.name(), token.getToken(), req.email());
 	}
 
 	@Transactional(readOnly = true)
@@ -85,6 +84,23 @@ public class AuthService {
 
 		foundToken.getUser().verifyEmail();
 		foundToken.use();
+	}
+
+	public void resendVerificationEmail(String expiredToken) {
+		VerificationToken foundExpiredToken = tokenRepository.findByToken(expiredToken)
+															 .orElseThrow(() -> new CustomException(ErrorCode.VERIFICATION_TOKEN_NOT_FOUND));
+
+		if (foundExpiredToken.getUsedAt() != null) {
+			throw new CustomException(ErrorCode.VERIFICATION_TOKEN_ALREADY_USED);
+		}
+
+		User foundUser = foundExpiredToken.getUser();
+		VerificationToken newToken = VerificationToken.createEmailVerificationToken(foundUser);
+
+		tokenRepository.delete(foundExpiredToken);
+		tokenRepository.save(newToken);
+
+		sendVerificationEmail(foundUser.getName(), newToken.getToken(), foundUser.getEmail());
 	}
 
 	public void requestResetPassword(String email) {
@@ -122,5 +138,10 @@ public class AuthService {
 			throw new CustomException(ErrorCode.VERIFICATION_TOKEN_EXPIRED);
 		}
 		return foundToken;
+	}
+
+	private void sendVerificationEmail(String name, String token, String email) {
+		VerifyEmailContext emailContext = new VerifyEmailContext(name, token, frontendURL);
+		emailService.sendTemplateEmail(email, emailContext);
 	}
 }

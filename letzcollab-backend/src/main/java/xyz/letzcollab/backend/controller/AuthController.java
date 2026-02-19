@@ -56,7 +56,7 @@ public class AuthController {
 	/**
 	 *
 	 * (웹 프론트 전용)
-	 * 브라우저에서 JWT 쿠키 없애고 싶을 때 호출
+	 * 브라우저에서 JWT 쿠키를 없애고 싶을 때 호출
 	 */
 	@PostMapping("/logout")
 	public ResponseEntity<ApiResponse<Void>> logout(HttpServletResponse httpServletResponse) {
@@ -77,6 +77,14 @@ public class AuthController {
 	public ResponseEntity<ApiResponse<Void>> verifyEmail(@Valid @RequestBody EmailVerificationRequest req) {
 		authService.verifyEmail(req.token());
 		return ResponseEntity.ok(ApiResponse.success("이메일 인증 성공!"));
+	}
+
+	@PostMapping("/verify-email/resend")
+	public ResponseEntity<ApiResponse<Void>> resendVerificationEmail(
+			@Valid @RequestBody ResendEmailVerificationRequest req
+	) {
+		authService.resendVerificationEmail(req.expiredToken());
+		return ResponseEntity.ok(ApiResponse.success("이메일 재전송 완료! 30분 이내에 이메일 인증을 완료해주세요."));
 	}
 
 	@PostMapping("/password/reset-request")
