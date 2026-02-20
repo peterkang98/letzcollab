@@ -94,4 +94,13 @@ public class User extends PublicIdAndDateBaseEntity {
 	public void resetPassword(String newPassword) {
 		this.password = newPassword;
 	}
+
+	public void ban() {
+		this.status = UserStatus.BANNED;
+	}
+
+	public void delete() {
+		this.status = UserStatus.DELETED;
+		this.email = "deleted" + this.email + "_" + System.currentTimeMillis();
+	}
 }
