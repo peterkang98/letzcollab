@@ -1,6 +1,5 @@
 package xyz.letzcollab.backend.global.security.jwt;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -10,15 +9,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import xyz.letzcollab.backend.global.dto.ApiResponse;
+import xyz.letzcollab.backend.global.security.AuthErrorHandler;
 import xyz.letzcollab.backend.global.exception.ErrorCode;
 
 import java.io.IOException;
@@ -33,7 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	private static final String BEARER_PREFIX = "Bearer ";
 
 	private final JwtTokenProvider jwtTokenProvider;
-	private final ObjectMapper objectMapper;
+	private final AuthErrorHandler errorHandler;
 
 	@Override
 	protected void doFilterInternal(
@@ -52,11 +49,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 			filterChain.doFilter(request, response);
 		} catch (ExpiredJwtException e) {
-			sendErrorResponse(response, ErrorCode.JWT_TOKEN_EXPIRED);
+			errorHandler.handle(response, ErrorCode.JWT_TOKEN_EXPIRED);
 			return;
 		} catch (JwtException e) {
 			log.warn("JWT 검증 실패: {}", e.getMessage());
-			sendErrorResponse(response, ErrorCode.JWT_INVALID_TOKEN);
+			errorHandler.handle(response, ErrorCode.JWT_INVALID_TOKEN);
 			return;
 		}
 	}
@@ -78,15 +75,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		}
 
 		return null;
-	}
-
-	private void sendErrorResponse(HttpServletResponse response, ErrorCode errorCode) throws IOException {
-		response.setStatus(HttpStatus.UNAUTHORIZED.value());
-		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-		response.setCharacterEncoding("UTF-8");
-
-		ApiResponse<Void> apiResponse = ApiResponse.fail(errorCode);
-
-		response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
 	}
 }
