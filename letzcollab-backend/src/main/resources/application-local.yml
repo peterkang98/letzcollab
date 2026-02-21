@@ -14,13 +14,6 @@ spring:
       ddl-auto: create
 
   mail:
-    host: localhost
-    port: 1025
-    username: local-test@letzcollab.xyz
     properties:
       mail:
-        smtp:
-          auth: false
-          starttls:
-            enable: true
         debug: true

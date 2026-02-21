@@ -8,5 +8,29 @@ spring:
   messages:
     fallback-to-system-locale: false
 
+  mail:
+    host: email-smtp.ap-northeast-2.amazonaws.com
+    port: 587
+    username: ${EMAIL_USERNAME}
+    password: ${EMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
 frontend:
-  base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
+  base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
+
+jwt:
+  secret: ${JWT_ENC_KEY}
+  access-validity-in-ms: ${JWT_ACCESS_EXP_TIME}
+
+users:
+  admin:
+    password: ${ADMIN_PW}

@@ -1,0 +1,3 @@
+jwt:
+  secret: "random+test+secret+key+with+more+than+45+characters"
+  access-validity-in-ms: 3600000
