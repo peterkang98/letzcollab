@@ -1,3 +1,20 @@
 jwt:
   secret: "random+test+secret+key+with+more+than+45+characters"
   access-validity-in-ms: 3600000
+
+
+spring:
+  datasource:
+    # H2 인메모리 DB 사용 (Postgres 문법을 최대한 쓰도록)
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
