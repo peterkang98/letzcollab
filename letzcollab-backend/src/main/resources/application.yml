@@ -23,6 +23,10 @@ spring:
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
+  jpa:
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100
 
 frontend:
   base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
