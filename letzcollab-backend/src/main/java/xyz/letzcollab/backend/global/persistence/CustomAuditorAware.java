@@ -9,12 +9,13 @@ import org.springframework.stereotype.Component;
 import xyz.letzcollab.backend.global.security.userdetails.CustomUserDetails;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
-public class CustomAuditorAware implements AuditorAware<String> {
+public class CustomAuditorAware implements AuditorAware<UUID> {
 	@Override
 	@NonNull
-	public Optional<String> getCurrentAuditor() {
+	public Optional<UUID> getCurrentAuditor() {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
 		if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {

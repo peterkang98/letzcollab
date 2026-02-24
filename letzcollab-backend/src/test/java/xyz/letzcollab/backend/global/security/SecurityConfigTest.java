@@ -17,6 +17,8 @@ import xyz.letzcollab.backend.entity.vo.UserStatus;
 import xyz.letzcollab.backend.global.security.jwt.JwtTokenProvider;
 import xyz.letzcollab.backend.global.security.userdetails.CustomUserDetails;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -39,7 +41,7 @@ class SecurityConfigTest {
 	private String createValidToken() {
 		CustomUserDetails userDetails = new CustomUserDetails(
 				"테스트유저",
-				"f975142b-aae5-4747-aaa9-f7ad11d84ce3",
+				UUID.fromString("f975142b-aae5-4747-aaa9-f7ad11d84ce3"),
 				"user@example.com",
 				"pw",
 				UserRole.USER,

@@ -15,6 +15,7 @@ import xyz.letzcollab.backend.global.security.userdetails.CustomUserDetails;
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class JwtTokenProvider {
@@ -33,7 +34,7 @@ public class JwtTokenProvider {
 	public String createToken(Authentication authentication) {
 		CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-		String publicId = userDetails.getPublicId();
+		String publicId = userDetails.getPublicId().toString();
 		String email = userDetails.getUsername();
 		String role = userDetails.getRole().getAuthority();
 
@@ -57,7 +58,14 @@ public class JwtTokenProvider {
 		String email = claims.get("email", String.class);
 		String role = claims.get("role", String.class);
 
-		CustomUserDetails userDetails = new CustomUserDetails("", publicId, email, "", UserRole.fromAuthority(role), null);
+		CustomUserDetails userDetails = new CustomUserDetails(
+				"",
+				UUID.fromString(publicId),
+				email,
+				"",
+				UserRole.fromAuthority(role),
+				null
+		);
 
 		return new UsernamePasswordAuthenticationToken(userDetails, "", List.of(new SimpleGrantedAuthority(role)));
 	}
