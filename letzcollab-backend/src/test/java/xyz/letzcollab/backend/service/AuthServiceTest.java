@@ -30,6 +30,7 @@ import xyz.letzcollab.backend.repository.VerificationTokenRepository;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -225,7 +226,7 @@ class AuthServiceTest {
 		@Test
 		@DisplayName("존재하지 않는 토큰으로 인증 시 VERIFICATION_TOKEN_NOT_FOUND 예외가 발생한다")
 		void verifyEmail_tokenNotFound_throwsException() {
-			assertThatThrownBy(() -> authService.verifyEmail("non-existent-token"))
+			assertThatThrownBy(() -> authService.verifyEmail(UUID.randomUUID()))
 					.isInstanceOf(CustomException.class)
 					.satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.VERIFICATION_TOKEN_NOT_FOUND));
 		}
@@ -287,7 +288,7 @@ class AuthServiceTest {
 														.filter(t -> t.getUser().getId().equals(user.getId()))
 														.findFirst()
 														.orElseThrow();
-			String oldTokenValue = oldToken.getToken();
+			UUID oldTokenValue = oldToken.getToken();
 			expireToken(oldToken);
 
 			// when
@@ -304,7 +305,7 @@ class AuthServiceTest {
 		@Test
 		@DisplayName("존재하지 않는 토큰으로 재전송 요청 시 VERIFICATION_TOKEN_NOT_FOUND 예외")
 		void resend_tokenNotFound_throwsException() {
-			assertThatThrownBy(() -> authService.resendVerificationEmail("invalid-token"))
+			assertThatThrownBy(() -> authService.resendVerificationEmail(UUID.randomUUID()))
 					.isInstanceOf(CustomException.class)
 					.satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.VERIFICATION_TOKEN_NOT_FOUND));
 		}
@@ -412,7 +413,7 @@ class AuthServiceTest {
 		@Test
 		@DisplayName("존재하지 않는 토큰으로 재설정 시 VERIFICATION_TOKEN_NOT_FOUND 예외 발생")
 		void resetPassword_tokenNotFound() {
-			assertThatThrownBy(() -> authService.resetPassword("invalid", "newPwd"))
+			assertThatThrownBy(() -> authService.resetPassword(UUID.randomUUID(), "newPwd"))
 					.isInstanceOf(CustomException.class)
 					.satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.VERIFICATION_TOKEN_NOT_FOUND));
 		}

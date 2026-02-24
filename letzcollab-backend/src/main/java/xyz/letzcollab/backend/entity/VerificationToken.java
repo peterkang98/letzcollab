@@ -21,8 +21,8 @@ public class VerificationToken {
 	@GeneratedValue
 	private Long id;
 
-	@Column(unique = true, updatable = false, nullable = false)
-	private String token;
+	@Column(unique = true, columnDefinition = "uuid", updatable = false, nullable = false)
+	private UUID token;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", nullable = false)
@@ -46,7 +46,7 @@ public class VerificationToken {
 		this.user = user;
 		this.type = type;
 		this.expiresAt = LocalDateTime.now().plusMinutes(30);
-		this.token = UUID.randomUUID().toString();
+		this.token = UUID.randomUUID();
 	}
 
 	public static VerificationToken createEmailVerificationToken(User user) {

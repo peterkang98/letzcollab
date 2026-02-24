@@ -22,6 +22,8 @@ import xyz.letzcollab.backend.global.security.userdetails.CustomUserDetails;
 import xyz.letzcollab.backend.repository.UserRepository;
 import xyz.letzcollab.backend.repository.VerificationTokenRepository;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -53,7 +55,7 @@ public class AuthService {
 		VerificationToken token = VerificationToken.createEmailVerificationToken(user);
 		tokenRepository.save(token);
 
-		sendVerificationEmail(req.name(), token.getToken(), req.email());
+		sendVerificationEmail(req.name(), token.getToken().toString(), req.email());
 	}
 
 	@Transactional(readOnly = true)
@@ -79,14 +81,14 @@ public class AuthService {
 		}
 	}
 
-	public void verifyEmail(String token) {
+	public void verifyEmail(UUID token) {
 		VerificationToken foundToken = getVerificationToken(token);
 
 		foundToken.getUser().verifyEmail();
 		foundToken.use();
 	}
 
-	public void resendVerificationEmail(String expiredToken) {
+	public void resendVerificationEmail(UUID expiredToken) {
 		VerificationToken foundExpiredToken = tokenRepository.findByToken(expiredToken)
 															 .orElseThrow(() -> new CustomException(ErrorCode.VERIFICATION_TOKEN_NOT_FOUND));
 
@@ -100,7 +102,7 @@ public class AuthService {
 		tokenRepository.delete(foundExpiredToken);
 		tokenRepository.save(newToken);
 
-		sendVerificationEmail(foundUser.getName(), newToken.getToken(), foundUser.getEmail());
+		sendVerificationEmail(foundUser.getName(), newToken.getToken().toString(), foundUser.getEmail());
 	}
 
 	public void requestResetPassword(String email) {
@@ -115,19 +117,19 @@ public class AuthService {
 		tokenRepository.save(passwordResetToken);
 
 		PasswordResetEmailContext emailContext = new PasswordResetEmailContext(
-				foundUser.getName(), passwordResetToken.getToken(), frontendURL
+				foundUser.getName(), passwordResetToken.getToken().toString(), frontendURL
 		);
 		emailService.sendTemplateEmail(email, emailContext);
 	}
 
-	public void resetPassword(String token, String newPassword) {
+	public void resetPassword(UUID token, String newPassword) {
 		VerificationToken foundToken = getVerificationToken(token);
 
 		foundToken.getUser().resetPassword(passwordEncoder.encode(newPassword));
 		foundToken.use();
 	}
 
-	private VerificationToken getVerificationToken(String token) {
+	private VerificationToken getVerificationToken(UUID token) {
 		VerificationToken foundToken = tokenRepository.findByToken(token)
 													  .orElseThrow(() -> new CustomException(ErrorCode.VERIFICATION_TOKEN_NOT_FOUND));
 
