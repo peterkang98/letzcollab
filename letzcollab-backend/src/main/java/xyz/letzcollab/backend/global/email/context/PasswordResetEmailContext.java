@@ -10,7 +10,7 @@ public record PasswordResetEmailContext(String name, String token, String baseUr
 
 	@Override
 	public String getSubject() {
-		return "비밀번호를 재설정 해주세요";
+		return "[Letz Collab] 비밀번호를 재설정 해주세요";
 	}
 
 	@Override
