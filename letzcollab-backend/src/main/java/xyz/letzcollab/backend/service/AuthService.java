@@ -41,6 +41,7 @@ public class AuthService {
 
 	public void signup(SignupRequest req) {
 		if (userRepository.existsByEmail(req.email())) {
+			log.warn("회원가입 실패 - 이메일 중복: {}", req.email());
 			throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
 		}
 
@@ -51,15 +52,18 @@ public class AuthService {
 				req.phoneNumber()
 		);
 		userRepository.save(user);
+		log.info("회원가입 완료 - email: {}", req.email());
 
 		VerificationToken token = VerificationToken.createEmailVerificationToken(user);
 		tokenRepository.save(token);
 
 		sendVerificationEmail(req.name(), token.getToken().toString(), req.email());
+		log.info("이메일 인증 메일 발송 - email: {}", req.email());
 	}
 
 	@Transactional(readOnly = true)
 	public LoginResponse login(String email, String password) {
+		log.debug("로그인 시도 - email: {}", email);
 		try {
 			UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(email, password);
 
@@ -68,31 +72,42 @@ public class AuthService {
 			String token = jwtTokenProvider.createToken(authentication);
 			CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
+			log.info("로그인 성공 - email: {}", email);
 			return new LoginResponse(token, userDetails.getName(), userDetails.getEmail());
+
 		} catch (BadCredentialsException e) {
-			log.warn("로그인 실패: 이메일 또는 비밀번호 불일치 [Email: {}]", email);
+			log.warn("로그인 실패 - 이메일 또는 비밀번호 불일치: {}", email);
 			throw e;
 		} catch (DisabledException e) {
-			log.warn("로그인 실패: 이메일 미인증 [Email: {}]", email);
+			log.warn("로그인 실패 - 이메일 미인증: {}", email);
 			throw e;
 		} catch (LockedException e) {
-			log.warn("로그인 실패: 계정 잠김/탈퇴 [Email: {}]", email);
+			log.warn("로그인 실패 - 계정 잠김/탈퇴: {}", email);
 			throw e;
 		}
 	}
 
 	public void verifyEmail(UUID token) {
-		VerificationToken foundToken = getVerificationToken(token);
+		log.debug("이메일 인증 시도 - token: {}", token);
 
+		VerificationToken foundToken = getVerificationToken(token);
 		foundToken.getUser().verifyEmail();
 		foundToken.use();
+
+		log.info("이메일 인증 완료 - email: {}", foundToken.getUser().getEmail());
 	}
 
 	public void resendVerificationEmail(UUID expiredToken) {
+		log.debug("인증 메일 재발송 요청 - token: {}", expiredToken);
+
 		VerificationToken foundExpiredToken = tokenRepository.findByToken(expiredToken)
-															 .orElseThrow(() -> new CustomException(ErrorCode.VERIFICATION_TOKEN_NOT_FOUND));
+															 .orElseThrow(() -> {
+																 log.warn("인증 메일 재발송 실패 - 토큰 없음: {}", expiredToken);
+																 return new CustomException(ErrorCode.VERIFICATION_TOKEN_NOT_FOUND);
+															 });
 
 		if (foundExpiredToken.getUsedAt() != null) {
+			log.warn("인증 메일 재발송 실패 - 이미 사용된 토큰: {}", expiredToken);
 			throw new CustomException(ErrorCode.VERIFICATION_TOKEN_ALREADY_USED);
 		}
 
@@ -103,13 +118,20 @@ public class AuthService {
 		tokenRepository.save(newToken);
 
 		sendVerificationEmail(foundUser.getName(), newToken.getToken().toString(), foundUser.getEmail());
+		log.info("인증 메일 재발송 완료 - email: {}", foundUser.getEmail());
 	}
 
 	public void requestResetPassword(String email) {
+		log.debug("비밀번호 재설정 요청 - email: {}", email);
+
 		User foundUser = userRepository.findByEmail(email)
-									   .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+									   .orElseThrow(() -> {
+										   log.warn("비밀번호 재설정 실패 - 존재하지 않는 이메일: {}", email);
+										   return new CustomException(ErrorCode.USER_NOT_FOUND);
+									   });
 
 		if (!foundUser.getStatus().canResetPassword()) {
+			log.warn("비밀번호 재설정 실패 - 정지 또는 탈퇴 계정: {}", email);
 			throw new CustomException(ErrorCode.LOCKED);
 		}
 
@@ -119,24 +141,34 @@ public class AuthService {
 		PasswordResetEmailContext emailContext = new PasswordResetEmailContext(
 				foundUser.getName(), passwordResetToken.getToken().toString(), frontendURL
 		);
+
 		emailService.sendTemplateEmail(email, emailContext);
+		log.info("비밀번호 재설정 메일 발송 완료 - email: {}", email);
 	}
 
 	public void resetPassword(UUID token, String newPassword) {
-		VerificationToken foundToken = getVerificationToken(token);
+		log.debug("비밀번호 재설정 시도 - token: {}", token);
 
+		VerificationToken foundToken = getVerificationToken(token);
 		foundToken.getUser().resetPassword(passwordEncoder.encode(newPassword));
 		foundToken.use();
+
+		log.info("비밀번호 재설정 완료 - email: {}", foundToken.getUser().getEmail());
 	}
 
 	private VerificationToken getVerificationToken(UUID token) {
 		VerificationToken foundToken = tokenRepository.findByToken(token)
-													  .orElseThrow(() -> new CustomException(ErrorCode.VERIFICATION_TOKEN_NOT_FOUND));
+													  .orElseThrow(() -> {
+														  log.warn("토큰 조회 실패 - 존재하지 않는 토큰: {}", token);
+														  return new CustomException(ErrorCode.VERIFICATION_TOKEN_NOT_FOUND);
+													  });
 
 		if (foundToken.getUsedAt() != null) {
+			log.warn("토큰 검증 실패 - 이미 사용된 토큰: {}", token);
 			throw new CustomException(ErrorCode.VERIFICATION_TOKEN_ALREADY_USED);
 		}
 		if (foundToken.isExpired()) {
+			log.warn("토큰 검증 실패 - 만료된 토큰: {}", token);
 			throw new CustomException(ErrorCode.VERIFICATION_TOKEN_EXPIRED);
 		}
 		return foundToken;
