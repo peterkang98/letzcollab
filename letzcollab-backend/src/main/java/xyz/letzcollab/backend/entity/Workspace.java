@@ -23,7 +23,7 @@ public class Workspace extends PublicIdAndFullAuditBaseEntity {
 	@Column(name = "workspace_id")
 	private Long id;
 
-	@Column(nullable = false)
+	@Column(nullable = false, length = 50)
 	private String name;
 
 	@ManyToOne(fetch = FetchType.LAZY)
