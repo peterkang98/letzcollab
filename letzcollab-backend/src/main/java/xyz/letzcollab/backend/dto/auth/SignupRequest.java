@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 
 public record SignupRequest(
 	@NotBlank(message = "이름은 필수입니다.")
-	@Size(min = 2, max = 100)
+	@Size(min = 2, max = 100, message = "이름은 2자 이상 100자 이하로 입력해주세요.")
 	String name,
 
 	@NotBlank(message = "이메일은 필수입니다")
