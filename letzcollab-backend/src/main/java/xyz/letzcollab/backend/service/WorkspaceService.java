@@ -34,11 +34,16 @@ public class WorkspaceService {
 	private final WorkspaceMemberRepository workspaceMemberRepository;
 	private final UserRepository userRepository;
 
+	/**
+	 * (워크스페이스 이름, 소유자 ID)에 복합 unique 제약조건이 있음
+	 * 즉, 워크스페이스 이름 = 전역 중복 허용 but. 사용자별 중복 차단
+	 * -> 사용자가 검색을 통해 워크스페이스를 찾을 수 없고 오직 초대로만 진입이 가능하기 때문에 이렇게 설계함
+ 	 */
 	public UUID createWorkspace(UUID userPublicId, String workspaceName, String position) {
 		User owner = userRepository.findByPublicId(userPublicId)
 								   .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
 
-		if (workspaceRepository.existsByName(workspaceName)) {
+		if (workspaceRepository.existsByNameAndOwner(workspaceName, owner)) {
 			throw new CustomException(DUPLICATE_WORKSPACE_NAME);
 		}
 

@@ -16,7 +16,15 @@ import java.util.List;
 @Entity
 @SQLRestriction("deleted_at IS NULL")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "workspaces")
+@Table(
+	name = "workspaces",
+	uniqueConstraints = {
+		@UniqueConstraint(
+			name = "uk_workspace_owner_name",
+			columnNames = {"owner_id", "name"}
+		)
+	}
+)
 public class Workspace extends PublicIdAndFullAuditBaseEntity {
 	@Id
 	@GeneratedValue
@@ -59,6 +67,7 @@ public class Workspace extends PublicIdAndFullAuditBaseEntity {
 
 	public void softDelete() {
 		this.deletedAt = LocalDateTime.now();
+		this.name = "deleted" + this.name + "_" + System.currentTimeMillis();
 	}
 
 	public void updateName(String newWorkspaceName) {
