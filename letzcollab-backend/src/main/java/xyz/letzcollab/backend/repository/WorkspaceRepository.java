@@ -6,7 +6,6 @@ import org.springframework.data.repository.query.Param;
 import xyz.letzcollab.backend.entity.User;
 import xyz.letzcollab.backend.entity.Workspace;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 

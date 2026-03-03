@@ -17,10 +17,8 @@ import xyz.letzcollab.backend.entity.WorkspaceInvitation;
 import xyz.letzcollab.backend.entity.WorkspaceMember;
 import xyz.letzcollab.backend.entity.vo.WorkspaceRole;
 import xyz.letzcollab.backend.global.email.EmailService;
-import xyz.letzcollab.backend.global.email.context.VerifyEmailContext;
 import xyz.letzcollab.backend.global.email.context.WorkspaceInvitationEmailContext;
 import xyz.letzcollab.backend.global.exception.CustomException;
-import xyz.letzcollab.backend.global.exception.ErrorCode;
 import xyz.letzcollab.backend.repository.UserRepository;
 import xyz.letzcollab.backend.repository.WorkspaceInvitationRepository;
 import xyz.letzcollab.backend.repository.WorkspaceMemberRepository;
@@ -33,7 +31,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static xyz.letzcollab.backend.global.exception.ErrorCode.*;
 
 

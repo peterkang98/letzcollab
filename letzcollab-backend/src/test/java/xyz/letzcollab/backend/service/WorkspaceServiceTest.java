@@ -24,9 +24,7 @@ import xyz.letzcollab.backend.repository.WorkspaceRepository;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.*;
 import static xyz.letzcollab.backend.global.exception.ErrorCode.*;
 
 @SpringBootTest
