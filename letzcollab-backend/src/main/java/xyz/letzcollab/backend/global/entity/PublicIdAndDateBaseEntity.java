@@ -14,11 +14,11 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public abstract class PublicIdAndDateBaseEntity extends DateBaseEntity {
 
-	@Column(name = "public_id", length = 36, updatable = false, nullable = false, unique = true)
-	private String publicId;
+	@Column(name = "public_id", columnDefinition = "uuid", updatable = false, nullable = false, unique = true)
+	private UUID publicId;
 
 	@PrePersist
 	private void generatePublicId() {
-		this.publicId = UUID.randomUUID().toString();
+		this.publicId = UUID.randomUUID();
 	}
 }

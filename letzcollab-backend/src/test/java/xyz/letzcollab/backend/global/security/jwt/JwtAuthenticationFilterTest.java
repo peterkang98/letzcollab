@@ -20,6 +20,8 @@ import xyz.letzcollab.backend.entity.vo.UserStatus;
 import xyz.letzcollab.backend.global.exception.ErrorCode;
 import xyz.letzcollab.backend.global.security.userdetails.CustomUserDetails;
 
+import java.util.UUID;
+
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -43,17 +45,17 @@ class JwtAuthenticationFilterTest {
 	// 401 에러 응답 검증 헬퍼
 	private void expectUnauthorizedResponse(ResultActions result, ErrorCode expectedErrorCode) throws Exception {
 		result
-			.andExpect(status().isUnauthorized())
-			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-			.andExpect(jsonPath("$.success").value(false))
-			.andExpect(jsonPath("$.errorCode").value(expectedErrorCode.getCode()))
-			.andExpect(jsonPath("$.message").value(expectedErrorCode.getMessage()));
+				.andExpect(status().isUnauthorized())
+				.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.success").value(false))
+				.andExpect(jsonPath("$.errorCode").value(expectedErrorCode.getCode()))
+				.andExpect(jsonPath("$.message").value(expectedErrorCode.getMessage()));
 	}
 
 	private String createValidToken() {
 		CustomUserDetails userDetails = new CustomUserDetails(
 				"테스트유저",
-				"f975142b-aae5-4747-aaa9-f7ad11d84ce3",
+				UUID.fromString("f975142b-aae5-4747-aaa9-f7ad11d84ce3"),
 				"user@example.com",
 				"pw",
 				UserRole.USER,
@@ -150,7 +152,7 @@ class JwtAuthenticationFilterTest {
 			JwtTokenProvider expiredProvider = new JwtTokenProvider(testSecretKey, -1L);
 			CustomUserDetails userDetails = new CustomUserDetails(
 					"테스트",
-					"f975142b-aae5-4747-aaa9-f7ad11d84ce3",
+					UUID.fromString("f975142b-aae5-4747-aaa9-f7ad11d84ce3"),
 					"user@example.com",
 					"pw",
 					UserRole.USER,

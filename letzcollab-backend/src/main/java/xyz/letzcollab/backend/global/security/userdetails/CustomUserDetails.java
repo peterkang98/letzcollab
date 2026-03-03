@@ -12,12 +12,13 @@ import xyz.letzcollab.backend.entity.vo.UserStatus;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @RequiredArgsConstructor
 public class CustomUserDetails implements UserDetails {
 	private final String name;
-	private final String publicId;
+	private final UUID publicId;
 	private final String email;
 	private final String password;
 	private final UserRole role;

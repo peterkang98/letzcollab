@@ -10,7 +10,7 @@ public record VerifyEmailContext(String name, String token, String baseUrl) impl
 
 	@Override
 	public String getSubject() {
-		return "이메일 인증을 완료 해주세요";
+		return "[Letz Collab] 이메일 인증을 완료 해주세요";
 	}
 
 	@Override

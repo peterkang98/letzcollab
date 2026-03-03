@@ -12,6 +12,8 @@ import org.springframework.security.core.Authentication;
 import xyz.letzcollab.backend.entity.vo.UserRole;
 import xyz.letzcollab.backend.global.security.userdetails.CustomUserDetails;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
@@ -61,7 +63,7 @@ class JwtTokenProviderTest {
 			Authentication parsed = jwtTokenProvider.getAuthentication(token);
 			CustomUserDetails details = (CustomUserDetails) parsed.getPrincipal();
 
-			assertThat(details.getPublicId()).isEqualTo(publicId);
+			assertThat(details.getPublicId()).isEqualTo(UUID.fromString(publicId));
 			assertThat(details.getUsername()).isEqualTo(email);
 			assertThat(details.getRole()).isEqualTo(role);
 		}
@@ -139,7 +141,7 @@ class JwtTokenProviderTest {
 
 	private Authentication mockAuthentication(String publicId, String email, UserRole role) {
 		CustomUserDetails userDetails = mock(CustomUserDetails.class);
-		when(userDetails.getPublicId()).thenReturn(publicId);
+		when(userDetails.getPublicId()).thenReturn(UUID.fromString(publicId));
 		when(userDetails.getUsername()).thenReturn(email);
 		when(userDetails.getRole()).thenReturn(role);
 

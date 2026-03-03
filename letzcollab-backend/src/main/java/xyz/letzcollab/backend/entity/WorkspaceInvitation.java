@@ -6,17 +6,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import xyz.letzcollab.backend.entity.vo.TokenType;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
 @Entity
-@Table(name = "verification_tokens")
+@Table(name = "workspace_invitations")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
-public class VerificationToken {
+public class WorkspaceInvitation {
 	@Id
 	@GeneratedValue
 	private Long id;
@@ -24,13 +23,19 @@ public class VerificationToken {
 	@Column(unique = true, columnDefinition = "uuid", updatable = false, nullable = false)
 	private UUID token;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", nullable = false)
-	private User user;
+	@Column(name = "invitee_email", nullable = false)
+	private String inviteeEmail;
 
-	@Enumerated(EnumType.STRING)
-	@Column(length = 20, nullable = false)
-	private TokenType type;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "inviter_id", nullable = false)
+	private User inviter;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "workspace_id", nullable = false)
+	private Workspace workspace;
+
+	@Column(name = "invitee_position", length = 100)
+	private String inviteePosition;
 
 	@CreatedDate
 	@Column(name = "created_at", updatable = false, nullable = false)
@@ -42,26 +47,29 @@ public class VerificationToken {
 	@Column(name = "expires_at", updatable = false, nullable = false)
 	private LocalDateTime expiresAt;
 
-	private VerificationToken(User user, TokenType type) {
-		this.user = user;
-		this.type = type;
-		this.expiresAt = LocalDateTime.now().plusMinutes(30);
+	private WorkspaceInvitation(User inviter, Workspace workspace, String inviteeEmail, String inviteePosition) {
+		this.inviter = inviter;
+		this.workspace = workspace;
+		this.inviteeEmail = inviteeEmail;
+		this.inviteePosition = inviteePosition;
+		this.expiresAt = LocalDateTime.now().plusDays(1);
 		this.token = UUID.randomUUID();
 	}
 
-	public static VerificationToken createEmailVerificationToken(User user) {
-		return new VerificationToken(user, TokenType.VERIFY_EMAIL);
-	}
-
-	public static VerificationToken createPasswordVerificationToken(User user) {
-		return new VerificationToken(user, TokenType.PASSWORD_RESET);
+	public static WorkspaceInvitation createWorkspaceInvitation(
+			User inviter, Workspace workspace, String inviteeEmail, String inviteePosition
+	) {
+		return new WorkspaceInvitation(
+				inviter, workspace, inviteeEmail,
+				(inviteePosition == null || inviteePosition.isBlank()) ? null : inviteePosition
+		);
 	}
 
 	public boolean isExpired() {
 		return LocalDateTime.now().isAfter(this.expiresAt);
 	}
 
-	public void use() {
+	public void accept() {
 		this.usedAt = LocalDateTime.now();
 	}
 }

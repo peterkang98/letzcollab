@@ -33,7 +33,24 @@ public enum ErrorCode {
 	EMAIL_SEND_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "E001", "이메일 발송을 실패했습니다."),
 	VERIFICATION_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "E002", "해당 인증 토큰을 찾을 수 없습니다."),
 	VERIFICATION_TOKEN_EXPIRED(HttpStatus.GONE, "E003", "인증 토큰이 만료되었습니다."),
-	VERIFICATION_TOKEN_ALREADY_USED(HttpStatus.GONE, "E004", "이미 사용된 인증 토큰입니다.");
+	VERIFICATION_TOKEN_ALREADY_USED(HttpStatus.GONE, "E004", "이미 사용된 인증 토큰입니다."),
+
+	// --- Workspace (W) ---
+	// 보안을 위해, 권한 미달 때문에 실패했는지, 리소스가 없어서 실패했는지 정확히 알려주지 않음
+	WORKSPACE_NOT_FOUND_OR_ACCESS_DENIED(HttpStatus.NOT_FOUND, "W001", "워크스페이스가 존재하지 않거나 접근 권한이 없습니다."),
+
+	INSUFFICIENT_WORKSPACE_PERMISSION(HttpStatus.FORBIDDEN, "W002", "해당 작업을 수행할 권한이 없습니다."),
+	WORKSPACE_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "W003", "워크스페이스에서 해당 사용자를 찾을 수 없습니다."),
+	ALREADY_A_WORKSPACE_MEMBER(HttpStatus.CONFLICT, "W004", "이미 워크스페이스에 가입된 사용자입니다."),
+
+	WORKSPACE_INVITATION_INVALID(HttpStatus.GONE, "W005", "만료되거나 유효하지 않은 초대장입니다."),
+	WORKSPACE_INVITEE_MISMATCH(HttpStatus.FORBIDDEN, "W006", "초대받은 계정으로 로그인해주세요."),
+
+	DUPLICATE_WORKSPACE_NAME(HttpStatus.CONFLICT, "W007", "이미 사용 중인 워크스페이스 이름입니다."),
+	WORKSPACE_OWNER_RELEASE_REQUIRED(HttpStatus.BAD_REQUEST, "W008", "소유권을 이전하기 전에는 워크스페이스를 떠날 수 없습니다."),
+	CANNOT_TRANSFER_OWNERSHIP_TO_SELF(HttpStatus.BAD_REQUEST, "W009", "소유권을 자기 자신에게 이전할 수 없습니다."),
+	USE_SELF_UPDATE_API(HttpStatus.BAD_REQUEST, "W010", "본인 정보 수정은 전용 메뉴를 이용해 주세요."),
+	USE_SELF_DELETE_API(HttpStatus.BAD_REQUEST, "W011", "본인 계정 탈퇴는 전용 메뉴를 이용해 주세요.");
 
 	private final HttpStatus status;
 	private final String code;
