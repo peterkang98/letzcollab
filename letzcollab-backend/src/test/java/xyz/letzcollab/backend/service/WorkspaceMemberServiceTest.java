@@ -125,7 +125,7 @@ class WorkspaceMemberServiceTest {
 							generalUser.getPublicId(), workspace.getPublicId(), "new@test.com", null))
 					.isInstanceOf(CustomException.class)
 					.extracting(e -> ((CustomException) e).getErrorCode())
-					.isEqualTo(INSUFFICIENT_WORKSPACE_PERMISSION);
+					.isEqualTo(INSUFFICIENT_PERMISSION);
 		}
 
 		@Test
@@ -261,7 +261,7 @@ class WorkspaceMemberServiceTest {
 							generalUser.getPublicId(), null, WorkspaceRole.ADMIN))
 					.isInstanceOf(CustomException.class)
 					.extracting(e -> ((CustomException) e).getErrorCode())
-					.isEqualTo(INSUFFICIENT_WORKSPACE_PERMISSION);
+					.isEqualTo(INSUFFICIENT_PERMISSION);
 		}
 
 		@Test
@@ -339,7 +339,7 @@ class WorkspaceMemberServiceTest {
 					memberService.kickMember(generalUser.getPublicId(), workspace.getPublicId(), adminUser.getPublicId()))
 					.isInstanceOf(CustomException.class)
 					.extracting(e -> ((CustomException) e).getErrorCode())
-					.isEqualTo(INSUFFICIENT_WORKSPACE_PERMISSION);
+					.isEqualTo(INSUFFICIENT_PERMISSION);
 		}
 
 		@Test
@@ -357,7 +357,7 @@ class WorkspaceMemberServiceTest {
 					memberService.kickMember(adminUser.getPublicId(), workspace.getPublicId(), admin2.getPublicId()))
 					.isInstanceOf(CustomException.class)
 					.extracting(e -> ((CustomException) e).getErrorCode())
-					.isEqualTo(INSUFFICIENT_WORKSPACE_PERMISSION);
+					.isEqualTo(INSUFFICIENT_PERMISSION);
 		}
 
 		@Test
