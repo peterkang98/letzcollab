@@ -91,7 +91,7 @@ public class WorkspaceMemberService {
 	}
 
 	public void updateMyself(UUID workspacePublicId, UUID userPublicId, String newPosition) {
-		WorkspaceMember me = memberRepository.findByUserAndWorkspacePublicId(workspacePublicId, userPublicId)
+		WorkspaceMember me = memberRepository.findByWorkspacePublicIdAndUserPublicId(workspacePublicId, userPublicId)
 											 .orElseThrow(() -> new CustomException(WORKSPACE_NOT_FOUND_OR_ACCESS_DENIED));
 
 		me.updatePosition(newPosition);
