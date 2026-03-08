@@ -16,14 +16,12 @@ import xyz.letzcollab.backend.dto.project.*;
 import xyz.letzcollab.backend.entity.Project;
 import xyz.letzcollab.backend.entity.User;
 import xyz.letzcollab.backend.entity.Workspace;
+import xyz.letzcollab.backend.entity.WorkspaceMember;
 import xyz.letzcollab.backend.entity.vo.ProjectRole;
 import xyz.letzcollab.backend.entity.vo.ProjectStatus;
 import xyz.letzcollab.backend.entity.vo.WorkspaceRole;
 import xyz.letzcollab.backend.global.exception.CustomException;
-import xyz.letzcollab.backend.repository.ProjectMemberRepository;
-import xyz.letzcollab.backend.repository.ProjectRepository;
-import xyz.letzcollab.backend.repository.UserRepository;
-import xyz.letzcollab.backend.repository.WorkspaceRepository;
+import xyz.letzcollab.backend.repository.*;
 
 import java.util.UUID;
 
@@ -52,6 +50,8 @@ class ProjectServiceTest {
 	@Autowired
 	WorkspaceRepository workspaceRepository;
 	@Autowired
+	WorkspaceMemberRepository workspaceMemberRepository;
+	@Autowired
 	ProjectRepository projectRepository;
 	@Autowired
 	ProjectMemberRepository projectMemberRepository;
@@ -74,12 +74,11 @@ class ProjectServiceTest {
 		workspaceService.createWorkspace(wsOwner.getPublicId(), "테스트 워크스페이스", "CTO");
 		workspace = findWorkspaceByName("테스트 워크스페이스");
 
-		workspace.addMember(wsAdmin, "팀장");
+		workspaceMemberRepository.save(WorkspaceMember.createGeneralMember(wsAdmin, workspace, "팀장"));
 		workspaceMemberService.updateOtherMember(
 				wsOwner.getPublicId(), workspace.getPublicId(), wsAdmin.getPublicId(), null, WorkspaceRole.ADMIN
 		);
-		workspace.addMember(wsMember, "개발자");
-		workspaceRepository.saveAndFlush(workspace);
+		workspaceMemberRepository.saveAndFlush(WorkspaceMember.createGeneralMember(wsMember, workspace, "개발자"));
 	}
 
 

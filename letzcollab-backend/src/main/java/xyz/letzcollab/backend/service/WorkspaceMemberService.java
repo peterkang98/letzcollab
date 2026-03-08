@@ -85,7 +85,9 @@ public class WorkspaceMemberService {
 			throw new CustomException(ALREADY_A_WORKSPACE_MEMBER);
 		}
 
-		workspace.addMember(user, invitation.getInviteePosition());
+		WorkspaceMember newMember = WorkspaceMember.createGeneralMember(user, workspace, invitation.getInviteePosition());
+		memberRepository.save(newMember);
+
 		invitation.accept();
 		log.info("워크스페이스 초대 수락 - workspaceId={}, userId={}", workspace.getPublicId(), userPublicId);
 	}
@@ -105,7 +107,7 @@ public class WorkspaceMemberService {
 	) {
 		if (requesterUserPublicId.equals(targetMemberUserPublicId)) throw new CustomException(USE_SELF_UPDATE_API);
 
-		List<WorkspaceMember> members = memberRepository.findMembersForUpdate(
+		List<WorkspaceMember> members = memberRepository.findMembersByPublicIds(
 				workspacePublicId, requesterUserPublicId, targetMemberUserPublicId
 		);
 
@@ -135,14 +137,15 @@ public class WorkspaceMemberService {
 		if (withdrawer.getId().equals(owner.getId())) {
 			throw new CustomException(WORKSPACE_OWNER_RELEASE_REQUIRED);
 		}
-		workspace.leaveWorkspace(me);
+
+		memberRepository.delete(me);
 		log.info("워크스페이스 자진 탈퇴 - workspaceId={}, userId={}", workspacePublicId, userPublicId);
 	}
 
 	public void kickMember(UUID requesterUserPublicId, UUID workspacePublicId, UUID targetMemberUserPublicId) {
 		if (requesterUserPublicId.equals(targetMemberUserPublicId)) throw new CustomException(USE_SELF_DELETE_API);
 
-		List<WorkspaceMember> members = memberRepository.findMembersWithWorkspace(
+		List<WorkspaceMember> members = memberRepository.findMembersByPublicIds(
 				workspacePublicId, requesterUserPublicId, targetMemberUserPublicId
 		);
 
@@ -153,8 +156,7 @@ public class WorkspaceMemberService {
 			throw new CustomException(INSUFFICIENT_PERMISSION);
 		}
 
-		Workspace workspace = requester.getWorkspace();
-		workspace.leaveWorkspace(targetMember);
+		memberRepository.delete(targetMember);
 		log.info("멤버 강퇴 - workspaceId={}, requesterId={}, targetUserId={}",
 				workspacePublicId, requesterUserPublicId, targetMemberUserPublicId);
 	}

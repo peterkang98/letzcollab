@@ -56,7 +56,7 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
 			"JOIN FETCH wm.user u " +
 			"WHERE wm.workspace.publicId = :workspacePublicId " +
 			"AND u.publicId IN (:requesterUserPublicId, :targetMemberUserPublicId)")
-	List<WorkspaceMember> findMembersForUpdate(
+	List<WorkspaceMember> findMembersByPublicIds(
 			@Param("workspacePublicId") UUID workspacePublicId,
 			@Param("requesterUserPublicId") UUID requesterUserPublicId,
 			@Param("targetMemberUserPublicId")UUID targetMemberUserPublicId

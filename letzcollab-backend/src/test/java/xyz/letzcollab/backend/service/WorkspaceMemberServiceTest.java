@@ -1,5 +1,6 @@
 package xyz.letzcollab.backend.service;
 
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -42,6 +43,10 @@ import static xyz.letzcollab.backend.global.exception.ErrorCode.*;
 @Import(TestAuditConfig.class)
 @DisplayName("WorkspaceMemberService 통합 테스트")
 class WorkspaceMemberServiceTest {
+
+	@Autowired
+	EntityManager entityManager;
+
 	@Autowired
 	WorkspaceMemberService memberService;
 	@Autowired
@@ -77,14 +82,13 @@ class WorkspaceMemberServiceTest {
 		workspace = findWorkspaceByName("우아한동네");
 
 		// 멤버 추가 후 관리자로 승격
-		workspace.addMember(adminUser, "팀장");
+		memberRepository.save(WorkspaceMember.createGeneralMember(adminUser, workspace, "팀장"));
 		memberService.updateOtherMember(
 				owner.getPublicId(), workspace.getPublicId(), adminUser.getPublicId(), null, WorkspaceRole.ADMIN
 		);
 
 		// 일반 회원 추가
-		workspace.addMember(generalUser, "개발자");
-		workspaceRepository.saveAndFlush(workspace);
+		memberRepository.saveAndFlush(WorkspaceMember.createGeneralMember(generalUser, workspace, "개발자"));
 	}
 
 	@Nested
@@ -347,7 +351,7 @@ class WorkspaceMemberServiceTest {
 		void adminCannotKickAdmin() {
 			// given
 			User admin2 = saveUser("admin2@test.com", "어드민2");
-			workspace.addMember(admin2, "부팀장");
+			memberRepository.save(WorkspaceMember.createGeneralMember(admin2, workspace, "부팀장"));
 			memberService.updateOtherMember(
 					owner.getPublicId(), workspace.getPublicId(), admin2.getPublicId(), null, WorkspaceRole.ADMIN
 			);
@@ -381,6 +385,9 @@ class WorkspaceMemberServiceTest {
 			// given & when
 			memberService.transferOwnership(
 					owner.getPublicId(), workspace.getPublicId(), adminUser.getPublicId());
+
+			entityManager.flush();
+			entityManager.clear();
 
 			// then
 			Workspace updated = workspaceRepository.findWorkspaceWithAllMembers(workspace.getPublicId()).orElseThrow();

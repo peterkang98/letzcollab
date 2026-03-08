@@ -38,7 +38,7 @@ public class Workspace extends PublicIdAndFullAuditBaseEntity {
 	@JoinColumn(name = "owner_id", nullable = false)
 	private User owner;
 
-	@OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(mappedBy = "workspace", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private List<WorkspaceMember> members = new ArrayList<>();
 
 	@Column(name = "deleted_at")
@@ -54,15 +54,6 @@ public class Workspace extends PublicIdAndFullAuditBaseEntity {
 		WorkspaceMember workspaceOwner = WorkspaceMember.createWorkspaceOwner(owner, workspace, position);
 		workspace.members.add(workspaceOwner);
 		return workspace;
-	}
-
-	public void addMember(User user, String position) {
-		WorkspaceMember newMember = WorkspaceMember.createGeneralMember(user, this, position);
-		this.members.add(newMember);
-	}
-
-	public void leaveWorkspace(WorkspaceMember member) {
-		this.members.remove(member);
 	}
 
 	public void softDelete() {
