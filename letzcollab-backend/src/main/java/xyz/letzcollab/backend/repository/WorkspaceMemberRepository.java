@@ -32,6 +32,15 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
 
 	@Query("SELECT wm " +
 			"from WorkspaceMember wm " +
+			"JOIN FETCH wm.user u " +
+			"WHERE wm.workspace.publicId = :workspacePublicId AND u.publicId = :userPublicId")
+	Optional<WorkspaceMember> findMemberWithUser(
+			@Param("workspacePublicId") UUID workspacePublicId,
+			@Param("userPublicId") UUID userPublicId
+	);
+
+	@Query("SELECT wm " +
+			"from WorkspaceMember wm " +
 			"JOIN FETCH wm.workspace w " +
 			"JOIN FETCH wm.user u " +
 			"JOIN FETCH w.owner " +
@@ -41,15 +50,7 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
 			@Param("userPublicId") UUID userPublicId
 	);
 
-	@Query("SELECT wm " +
-			"from WorkspaceMember wm " +
-			"JOIN wm.workspace w " +
-			"JOIN wm.user u " +
-			"WHERE w.publicId = :workspacePublicId AND u.publicId = :userPublicId")
-	Optional<WorkspaceMember> findByUserAndWorkspacePublicId(
-			@Param("workspacePublicId") UUID workspacePublicId,
-			@Param("userPublicId") UUID userPublicId
-	);
+	Optional<WorkspaceMember> findByWorkspacePublicIdAndUserPublicId(UUID workspacePublicId, UUID userPublicId);
 
 	@Query("SELECT wm FROM WorkspaceMember wm " +
 			"JOIN FETCH wm.user u " +
@@ -72,21 +73,9 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
 			@Param("targetMemberUserPublicId")UUID targetMemberUserPublicId
 	);
 
-	@Query("SELECT COUNT(wm) > 0 " +
-			"FROM WorkspaceMember wm " +
-			"WHERE wm.workspace.publicId = :workspacePublicId AND wm.user.email = :email")
-	boolean existsByWorkspacePublicIdAndUserEmail(
-			@Param("workspacePublicId") UUID workspacePublicId,
-			@Param("email") String email
-	);
+	boolean existsByWorkspacePublicIdAndUserEmail(UUID workspacePublicId, String email);
 
-	@Query("SELECT COUNT(wm) > 0 " +
-			"FROM WorkspaceMember wm " +
-			"WHERE wm.workspace.publicId = :workspacePublicId AND wm.user.publicId = :userPublicId")
-	boolean existsByWorkspacePublicIdAndUserPublicId(
-			@Param("workspacePublicId") UUID workspacePublicId,
-			@Param("userPublicId") UUID userPublicId
-	);
+	boolean existsByWorkspacePublicIdAndUserPublicId(UUID workspacePublicId, UUID userPublicId);
 
 	boolean existsByWorkspaceAndUser(Workspace workspace, User user);
 }

@@ -124,4 +124,8 @@ public class WorkspaceMember {
 	protected void updateRoleBySystem(WorkspaceRole role) {
 		this.role = role;
 	}
+
+	public boolean canCreateProject() {
+		return this.role == WorkspaceRole.ADMIN || this.role == WorkspaceRole.OWNER;
+	}
 }

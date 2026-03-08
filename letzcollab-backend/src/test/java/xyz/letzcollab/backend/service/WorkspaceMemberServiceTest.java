@@ -125,7 +125,7 @@ class WorkspaceMemberServiceTest {
 							generalUser.getPublicId(), workspace.getPublicId(), "new@test.com", null))
 					.isInstanceOf(CustomException.class)
 					.extracting(e -> ((CustomException) e).getErrorCode())
-					.isEqualTo(INSUFFICIENT_WORKSPACE_PERMISSION);
+					.isEqualTo(INSUFFICIENT_PERMISSION);
 		}
 
 		@Test
@@ -207,7 +207,7 @@ class WorkspaceMemberServiceTest {
 			memberService.updateMyself(workspace.getPublicId(), generalUser.getPublicId(), "PM");
 
 			WorkspaceMember me = memberRepository
-					.findByUserAndWorkspacePublicId(workspace.getPublicId(), generalUser.getPublicId())
+					.findByWorkspacePublicIdAndUserPublicId(workspace.getPublicId(), generalUser.getPublicId())
 					.orElseThrow();
 			assertThat(me.getPosition()).isEqualTo("PM");
 		}
@@ -217,7 +217,7 @@ class WorkspaceMemberServiceTest {
 		void blankPositionKeepsOriginal() {
 			memberService.updateMyself(workspace.getPublicId(), generalUser.getPublicId(), "   ");
 
-			WorkspaceMember me = memberRepository.findByUserAndWorkspacePublicId(workspace.getPublicId(), generalUser.getPublicId())
+			WorkspaceMember me = memberRepository.findByWorkspacePublicIdAndUserPublicId(workspace.getPublicId(), generalUser.getPublicId())
 												 .orElseThrow();
 			assertThat(me.getPosition()).isEqualTo("개발자");
 		}
@@ -234,7 +234,7 @@ class WorkspaceMemberServiceTest {
 					owner.getPublicId(), workspace.getPublicId(),
 					generalUser.getPublicId(), "PM", WorkspaceRole.ADMIN);
 
-			WorkspaceMember target = memberRepository.findByUserAndWorkspacePublicId(workspace.getPublicId(), generalUser.getPublicId())
+			WorkspaceMember target = memberRepository.findByWorkspacePublicIdAndUserPublicId(workspace.getPublicId(), generalUser.getPublicId())
 													 .orElseThrow();
 			assertThat(target.getPosition()).isEqualTo("PM");
 			assertThat(target.getRole()).isEqualTo(WorkspaceRole.ADMIN);
@@ -247,7 +247,7 @@ class WorkspaceMemberServiceTest {
 					adminUser.getPublicId(), workspace.getPublicId(),
 					generalUser.getPublicId(), null, WorkspaceRole.GUEST);
 
-			WorkspaceMember target = memberRepository.findByUserAndWorkspacePublicId(workspace.getPublicId(), generalUser.getPublicId())
+			WorkspaceMember target = memberRepository.findByWorkspacePublicIdAndUserPublicId(workspace.getPublicId(), generalUser.getPublicId())
 													 .orElseThrow();
 			assertThat(target.getRole()).isEqualTo(WorkspaceRole.GUEST);
 		}
@@ -261,7 +261,7 @@ class WorkspaceMemberServiceTest {
 							generalUser.getPublicId(), null, WorkspaceRole.ADMIN))
 					.isInstanceOf(CustomException.class)
 					.extracting(e -> ((CustomException) e).getErrorCode())
-					.isEqualTo(INSUFFICIENT_WORKSPACE_PERMISSION);
+					.isEqualTo(INSUFFICIENT_PERMISSION);
 		}
 
 		@Test
@@ -339,7 +339,7 @@ class WorkspaceMemberServiceTest {
 					memberService.kickMember(generalUser.getPublicId(), workspace.getPublicId(), adminUser.getPublicId()))
 					.isInstanceOf(CustomException.class)
 					.extracting(e -> ((CustomException) e).getErrorCode())
-					.isEqualTo(INSUFFICIENT_WORKSPACE_PERMISSION);
+					.isEqualTo(INSUFFICIENT_PERMISSION);
 		}
 
 		@Test
@@ -357,7 +357,7 @@ class WorkspaceMemberServiceTest {
 					memberService.kickMember(adminUser.getPublicId(), workspace.getPublicId(), admin2.getPublicId()))
 					.isInstanceOf(CustomException.class)
 					.extracting(e -> ((CustomException) e).getErrorCode())
-					.isEqualTo(INSUFFICIENT_WORKSPACE_PERMISSION);
+					.isEqualTo(INSUFFICIENT_PERMISSION);
 		}
 
 		@Test

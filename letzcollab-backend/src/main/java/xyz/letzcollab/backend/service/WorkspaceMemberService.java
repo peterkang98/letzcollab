@@ -91,7 +91,7 @@ public class WorkspaceMemberService {
 	}
 
 	public void updateMyself(UUID workspacePublicId, UUID userPublicId, String newPosition) {
-		WorkspaceMember me = memberRepository.findByUserAndWorkspacePublicId(workspacePublicId, userPublicId)
+		WorkspaceMember me = memberRepository.findByWorkspacePublicIdAndUserPublicId(workspacePublicId, userPublicId)
 											 .orElseThrow(() -> new CustomException(WORKSPACE_NOT_FOUND_OR_ACCESS_DENIED));
 
 		me.updatePosition(newPosition);
@@ -114,7 +114,7 @@ public class WorkspaceMemberService {
 		WorkspaceMember targetMember = findMemberInList(members, targetMemberUserPublicId, WORKSPACE_MEMBER_NOT_FOUND);
 
 		if (!requester.canUpdateOtherMember(targetMember, newRole)) {
-			throw new CustomException(INSUFFICIENT_WORKSPACE_PERMISSION);
+			throw new CustomException(INSUFFICIENT_PERMISSION);
 		}
 
 		targetMember.updateInfo(newPosition, newRole);
@@ -150,7 +150,7 @@ public class WorkspaceMemberService {
 		WorkspaceMember targetMember = findMemberInList(members, targetMemberUserPublicId, WORKSPACE_MEMBER_NOT_FOUND);
 
 		if (!requester.canKickMember(targetMember)) {
-			throw new CustomException(INSUFFICIENT_WORKSPACE_PERMISSION);
+			throw new CustomException(INSUFFICIENT_PERMISSION);
 		}
 
 		Workspace workspace = requester.getWorkspace();
@@ -179,7 +179,7 @@ public class WorkspaceMemberService {
 	// 헬퍼 메소드
 	private void validateInviterPermissionAndInviteeExistence(UUID workspacePublicId, String inviteeEmail, WorkspaceMember requester) {
 		if (!requester.canInvite()) {
-			throw new CustomException(INSUFFICIENT_WORKSPACE_PERMISSION);
+			throw new CustomException(INSUFFICIENT_PERMISSION);
 		}
 
 		if (memberRepository.existsByWorkspacePublicIdAndUserEmail(workspacePublicId, inviteeEmail)) {
