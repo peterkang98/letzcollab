@@ -12,7 +12,7 @@ public record MemberSummaryDto(
 		String name,
 		String email,
 		String phoneNumber,
-		ProjectRole role,
+		String role,
 		String position,
 		LocalDateTime createdAt
 
@@ -24,7 +24,7 @@ public record MemberSummaryDto(
 				user.getName(),
 				user.getEmail(),
 				user.getPhoneNumber(),
-				projectMember.getRole(),
+				projectMember.getRole().getDescription(),
 				projectMember.getPosition(),
 				projectMember.getCreatedAt()
 		);
