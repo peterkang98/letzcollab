@@ -17,14 +17,12 @@ import xyz.letzcollab.backend.dto.project.UpdateOtherMemberRequest;
 import xyz.letzcollab.backend.entity.ProjectMember;
 import xyz.letzcollab.backend.entity.User;
 import xyz.letzcollab.backend.entity.Workspace;
+import xyz.letzcollab.backend.entity.WorkspaceMember;
 import xyz.letzcollab.backend.entity.vo.ProjectRole;
 import xyz.letzcollab.backend.entity.vo.ProjectStatus;
 import xyz.letzcollab.backend.entity.vo.WorkspaceRole;
 import xyz.letzcollab.backend.global.exception.CustomException;
-import xyz.letzcollab.backend.repository.ProjectMemberRepository;
-import xyz.letzcollab.backend.repository.ProjectRepository;
-import xyz.letzcollab.backend.repository.UserRepository;
-import xyz.letzcollab.backend.repository.WorkspaceRepository;
+import xyz.letzcollab.backend.repository.*;
 
 import java.util.UUID;
 
@@ -53,6 +51,8 @@ class ProjectMemberServiceTest {
 	@Autowired
 	WorkspaceRepository workspaceRepository;
 	@Autowired
+	WorkspaceMemberRepository workspaceMemberRepository;
+	@Autowired
 	ProjectRepository projectRepository;
 	@Autowired
 	ProjectMemberRepository projectMemberRepository;
@@ -77,13 +77,13 @@ class ProjectMemberServiceTest {
 		workspaceService.createWorkspace(wsOwner.getPublicId(), "테스트 워크스페이스", "CTO");
 		workspace = findWorkspaceByName("테스트 워크스페이스");
 
-		workspace.addMember(wsAdmin, "팀장");
+		workspaceMemberRepository.save(WorkspaceMember.createGeneralMember(wsAdmin, workspace, "팀장"));
 		workspaceMemberService.updateOtherMember(
 				wsOwner.getPublicId(), workspace.getPublicId(), wsAdmin.getPublicId(), null, WorkspaceRole.ADMIN
 		);
-		workspace.addMember(wsMember, "개발자");
-		workspace.addMember(wsOutsider, "디자이너");
-		workspaceRepository.saveAndFlush(workspace);
+
+		workspaceMemberRepository.save(WorkspaceMember.createGeneralMember(wsMember, workspace, "개발자"));
+		workspaceMemberRepository.saveAndFlush(WorkspaceMember.createGeneralMember(wsOutsider, workspace, "디자이너"));
 
 		// 프로젝트 생성 (wsOwner가 LEADER이자 ADMIN으로 등록됨)
 		projectId = projectService.createProject(wsOwner.getPublicId(), workspace.getPublicId(),
@@ -211,8 +211,7 @@ class ProjectMemberServiceTest {
 		void adminCannotUpdateAdmin() {
 			// given
 			User wsAdmin2 = saveUser("admin2@test.com", "관리자2");
-			workspace.addMember(wsAdmin2, "부팀장");
-			workspaceRepository.saveAndFlush(workspace);
+			workspaceMemberRepository.saveAndFlush(WorkspaceMember.createGeneralMember(wsAdmin2, workspace, "부팀장"));
 
 			AddMemberRequest addMemberRequest = new AddMemberRequest(wsAdmin2.getPublicId(), ProjectRole.ADMIN, null);
 			projectMemberService.addMember(wsOwner.getPublicId(), workspace.getPublicId(), projectId, addMemberRequest);
@@ -446,8 +445,7 @@ class ProjectMemberServiceTest {
 		@DisplayName("ADMIN이 다른 ADMIN을 강퇴 불가 → INSUFFICIENT_PERMISSION")
 		void adminCannotKickAdmin() {
 			User wsAdmin2 = saveUser("admin2@test.com", "관리자2");
-			workspace.addMember(wsAdmin2, "부팀장");
-			workspaceRepository.saveAndFlush(workspace);
+			workspaceMemberRepository.saveAndFlush(WorkspaceMember.createGeneralMember(wsAdmin2, workspace, "부팀장"));
 
 			AddMemberRequest addMemberRequest = new AddMemberRequest(wsAdmin2.getPublicId(), ProjectRole.ADMIN, null);
 			projectMemberService.addMember(wsOwner.getPublicId(), workspace.getPublicId(), projectId, addMemberRequest);
