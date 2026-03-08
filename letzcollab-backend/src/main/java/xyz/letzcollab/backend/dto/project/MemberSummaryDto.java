@@ -2,7 +2,6 @@ package xyz.letzcollab.backend.dto.project;
 
 import xyz.letzcollab.backend.entity.ProjectMember;
 import xyz.letzcollab.backend.entity.User;
-import xyz.letzcollab.backend.entity.vo.ProjectRole;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
