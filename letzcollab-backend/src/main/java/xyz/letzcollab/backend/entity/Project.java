@@ -64,7 +64,7 @@ public class Project extends PublicIdAndFullAuditBaseEntity {
 	@Column(name = "deleted_at")
 	private LocalDateTime deletedAt;
 
-	@OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(mappedBy = "project", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
 	private List<ProjectMember> members = new ArrayList<>();
 
 	@Builder(access = AccessLevel.PRIVATE)
