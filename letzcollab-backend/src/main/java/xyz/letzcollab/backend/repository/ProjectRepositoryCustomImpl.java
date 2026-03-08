@@ -13,9 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.util.StringUtils;
 import xyz.letzcollab.backend.dto.project.ProjectSearchCond;
 import xyz.letzcollab.backend.entity.Project;
-import xyz.letzcollab.backend.entity.QProjectMember;
 import xyz.letzcollab.backend.entity.QUser;
-import xyz.letzcollab.backend.entity.QWorkspace;
 import xyz.letzcollab.backend.entity.vo.ProjectStatus;
 
 import java.util.ArrayList;
