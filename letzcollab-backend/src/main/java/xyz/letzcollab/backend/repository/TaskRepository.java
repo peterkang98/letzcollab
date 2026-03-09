@@ -18,7 +18,7 @@ public interface TaskRepository extends JpaRepository<Task, Long>, TaskRepositor
 			"WHERE t.publicId = :taskPublicId")
 	Optional<Task> findTaskWithSubTasksAndMembers(@Param("taskPublicId") UUID taskPublicId);
 
-	// 수정/삭제 권한 검증용 — reporter, assignee fetch join
+	// 수정 권한 검증용 — reporter, assignee fetch join
 	@Query("SELECT t FROM Task t " +
 			"JOIN FETCH t.reporter " +
 			"JOIN FETCH t.assignee " +
