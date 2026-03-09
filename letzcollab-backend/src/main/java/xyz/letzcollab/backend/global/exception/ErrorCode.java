@@ -58,7 +58,11 @@ public enum ErrorCode {
 	ALREADY_A_PROJECT_MEMBER(HttpStatus.CONFLICT, "P004", "이미 프로젝트 멤버입니다."),
 	PROJECT_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "P005", "프로젝트에서 해당 사용자를 찾을 수 없습니다."),
 	PROJECT_LEADER_RELEASE_REQUIRED(HttpStatus.BAD_REQUEST, "P006", "리더를 변경한 후에 프로젝트를 떠날 수 있습니다."),
-	CANNOT_CHANGE_LEADER_TO_SELF(HttpStatus.BAD_REQUEST, "P007", "리더 권한을 자기 자신에게 이전할 수 없습니다.");
+	CANNOT_CHANGE_LEADER_TO_SELF(HttpStatus.BAD_REQUEST, "P007", "리더 권한을 자기 자신에게 이전할 수 없습니다."),
+
+	// --- Task (T) ---
+	TASK_NOT_FOUND_OR_ACCESS_DENIED(HttpStatus.NOT_FOUND, "T001", "업무가 존재하지 않거나 접근 권한이 없습니다."),
+	CANNOT_ASSIGN_TASK_TO_VIEWER(HttpStatus.BAD_REQUEST, "T002", "업무를 조회자에게 할당할 수 없습니다.");
 
 	private final HttpStatus status;
 	private final String code;

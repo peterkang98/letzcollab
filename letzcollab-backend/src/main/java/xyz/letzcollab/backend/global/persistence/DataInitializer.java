@@ -12,19 +12,19 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.letzcollab.backend.dto.project.AddMemberRequest;
 import xyz.letzcollab.backend.dto.project.CreateProjectRequest;
+import xyz.letzcollab.backend.dto.task.CreateTaskRequest;
+import xyz.letzcollab.backend.dto.task.UpdateTaskRequest;
 import xyz.letzcollab.backend.entity.User;
 import xyz.letzcollab.backend.entity.Workspace;
 import xyz.letzcollab.backend.entity.WorkspaceMember;
-import xyz.letzcollab.backend.entity.vo.ProjectRole;
-import xyz.letzcollab.backend.entity.vo.ProjectStatus;
-import xyz.letzcollab.backend.entity.vo.UserRole;
-import xyz.letzcollab.backend.entity.vo.WorkspaceRole;
+import xyz.letzcollab.backend.entity.vo.*;
 import xyz.letzcollab.backend.global.security.userdetails.CustomUserDetails;
 import xyz.letzcollab.backend.repository.UserRepository;
 import xyz.letzcollab.backend.repository.WorkspaceMemberRepository;
 import xyz.letzcollab.backend.repository.WorkspaceRepository;
 import xyz.letzcollab.backend.service.ProjectMemberService;
 import xyz.letzcollab.backend.service.ProjectService;
+import xyz.letzcollab.backend.service.TaskService;
 import xyz.letzcollab.backend.service.WorkspaceService;
 
 import java.time.LocalDate;
@@ -42,6 +42,7 @@ public class DataInitializer implements CommandLineRunner {
 	private final WorkspaceMemberRepository workspaceMemberRepository;
 	private final ProjectService projectService;
 	private final ProjectMemberService projectMemberService;
+	private final TaskService taskService;
 
 	@Value("${users.admin.password}")
 	private String adminPassword;
@@ -106,6 +107,44 @@ public class DataInitializer implements CommandLineRunner {
 		projectMemberService.addMember(
 				dummyUser.getPublicId(), workspaceId, projectId,
 				new AddMemberRequest(adminUser.getPublicId(), ProjectRole.ADMIN, null)
+		);
+
+		// 업무
+		UUID task1Id = taskService.createTask(
+				dummyUser.getPublicId(), projectId,
+				new CreateTaskRequest("쿼리 실행 계획 분석", "느린 쿼리 EXPLAIN 분석 및 인덱스 보완",
+						dummyUser2.getPublicId(), TaskPriority.URGENT, LocalDate.now().plusDays(3))
+		);
+
+		UUID task2Id = taskService.createTask(
+				dummyUser.getPublicId(), projectId,
+				new CreateTaskRequest("N+1 문제 해결", "JPA Fetch Join 적용",
+						dummyUser.getPublicId(), TaskPriority.HIGH, LocalDate.now().plusDays(5))
+		);
+
+		taskService.createTask(
+				dummyUser.getPublicId(), projectId,
+				new CreateTaskRequest("커넥션 풀 튜닝", "HikariCP 설정 최적화",
+						adminUser.getPublicId(), TaskPriority.MEDIUM, LocalDate.now().plusDays(7))
+		);
+
+		taskService.updateTask(dummyUser.getPublicId(), projectId, task1Id,
+				new UpdateTaskRequest(null, null, TaskStatus.IN_PROGRESS, null, null, null));
+
+		taskService.updateTask(dummyUser.getPublicId(), projectId, task2Id,
+				new UpdateTaskRequest(null, null, TaskStatus.DONE, null, null, null));
+
+		// 하위 업무
+		taskService.createSubTask(
+				dummyUser.getPublicId(), projectId, task1Id,
+				new CreateTaskRequest("인덱스 추가 적용", null,
+						dummyUser2.getPublicId(), TaskPriority.HIGH, LocalDate.now().plusDays(2))
+		);
+
+		taskService.createSubTask(
+				dummyUser.getPublicId(), projectId, task1Id,
+				new CreateTaskRequest("쿼리 리팩토링", null,
+						dummyUser.getPublicId(), TaskPriority.MEDIUM, LocalDate.now().plusDays(3))
 		);
 	}
 

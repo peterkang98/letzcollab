@@ -37,4 +37,26 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
 			@Param("requesterPublicId") UUID requesterPublicId,
 			@Param("targetUserPublicId") UUID targetUserPublicId
 	);
+
+	// 업무 도메인 ----
+	// reporter(요청자)의 user, project 한 번에 조회
+	@Query("SELECT pm FROM ProjectMember pm " +
+			"JOIN FETCH pm.user u " +
+			"JOIN FETCH pm.project p " +
+			"WHERE u.publicId = :userPublicId AND p.publicId = :projectPublicId")
+	Optional<ProjectMember> findMemberWithUserAndProject(
+			@Param("userPublicId") UUID userPublicId,
+			@Param("projectPublicId") UUID projectPublicId
+	);
+
+	// assignee 조회 전용 — user만 fetch join (project 불필요)
+	@Query("SELECT pm FROM ProjectMember pm " +
+			"JOIN FETCH pm.user u " +
+			"WHERE u.publicId = :userPublicId AND pm.project.publicId = :projectPublicId")
+	Optional<ProjectMember> findMemberWithUser(
+			@Param("userPublicId") UUID userPublicId,
+			@Param("projectPublicId") UUID projectPublicId
+	);
+
+	//--------------
 }
