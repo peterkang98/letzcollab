@@ -18,4 +18,11 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
 	Optional<Project> findByPublicIdWithLeader(@Param("projectPublicId") UUID projectPublicId);
 
 	boolean existsByWorkspaceAndName(Workspace workspace, String name);
+
+	// 업무 조회 권한 검증용
+	@Query("SELECT p " +
+			"FROM Project p " +
+			"JOIN FETCH p.workspace " +
+			"WHERE p.publicId = :projectPublicId")
+	Optional<Project> findByPublicIdWithWorkspace(@Param("projectPublicId") UUID projectPublicId);
 }
