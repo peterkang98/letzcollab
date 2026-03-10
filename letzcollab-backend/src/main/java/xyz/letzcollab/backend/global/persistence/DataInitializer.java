@@ -22,10 +22,7 @@ import xyz.letzcollab.backend.global.security.userdetails.CustomUserDetails;
 import xyz.letzcollab.backend.repository.UserRepository;
 import xyz.letzcollab.backend.repository.WorkspaceMemberRepository;
 import xyz.letzcollab.backend.repository.WorkspaceRepository;
-import xyz.letzcollab.backend.service.ProjectMemberService;
-import xyz.letzcollab.backend.service.ProjectService;
-import xyz.letzcollab.backend.service.TaskService;
-import xyz.letzcollab.backend.service.WorkspaceService;
+import xyz.letzcollab.backend.service.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -36,13 +33,16 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 	private final PasswordEncoder passwordEncoder;
-	private final UserRepository userRepository;
+
 	private final WorkspaceService workspaceService;
-	private final WorkspaceRepository workspaceRepository;
-	private final WorkspaceMemberRepository workspaceMemberRepository;
 	private final ProjectService projectService;
 	private final ProjectMemberService projectMemberService;
 	private final TaskService taskService;
+	private final TaskCommentService taskCommentService;
+
+	private final WorkspaceRepository workspaceRepository;
+	private final WorkspaceMemberRepository workspaceMemberRepository;
+	private final UserRepository userRepository;
 
 	@Value("${users.admin.password}")
 	private String adminPassword;
@@ -145,6 +145,34 @@ public class DataInitializer implements CommandLineRunner {
 				dummyUser.getPublicId(), projectId, task1Id,
 				new CreateTaskRequest("쿼리 리팩토링", null,
 						dummyUser.getPublicId(), TaskPriority.MEDIUM, LocalDate.now().plusDays(3))
+		);
+
+		taskCommentService.createComment(
+				dummyUser2.getPublicId(), projectId, task1Id,
+				"EXPLAIN 결과 보니까 full scan 나오는 쿼리 3개 있어요. 인덱스 추가하면 될 것 같습니다.", null
+		);
+
+		taskCommentService.createComment(
+				dummyUser.getPublicId(), projectId, task1Id,
+				"어떤 컬럼에 인덱스 추가하면 될까요?", null
+		);
+
+		Long secondCommentId = taskCommentService.getComments(dummyUser.getPublicId(), projectId, task1Id)
+												 .get(1).commentId();
+
+		taskCommentService.createComment(
+				dummyUser2.getPublicId(), projectId, task1Id,
+				"user_id, created_at 복합 인덱스 추가하면 될 것 같아요.", secondCommentId
+		);
+
+		taskCommentService.createComment(
+				dummyUser.getPublicId(), projectId, task2Id,
+				"Fetch Join 적용 완료했습니다. 쿼리 수 87개 → 3개로 줄었어요.", null
+		);
+
+		taskCommentService.createComment(
+				adminUser.getPublicId(), projectId, task2Id,
+				"수고하셨습니다! 코드 리뷰 확인 후 merge할게요.", null
 		);
 	}
 

@@ -34,4 +34,7 @@ public interface TaskRepository extends JpaRepository<Task, Long>, TaskRepositor
 	Optional<Task> findParentTaskByPublicIdAndProjectPublicId(
 			@Param("taskPublicId") UUID taskPublicId,
 			@Param("projectPublicId") UUID projectPublicId);
+
+	// 댓글 생성/조회용
+	Optional<Task> findByPublicIdAndProjectPublicId(UUID publicId, UUID projectPublicId);
 }
