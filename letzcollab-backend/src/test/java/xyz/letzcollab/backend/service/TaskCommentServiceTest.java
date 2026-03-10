@@ -257,6 +257,15 @@ class TaskCommentServiceTest {
 		}
 
 		@Test
+		@DisplayName("비공개 프로젝트에 속한 멤버는 댓글 목록을 조회할 수 있다")
+		void projectMemberCanReadComments() {
+			taskCommentService.createComment(member.getPublicId(), projectPublicId, taskPublicId, "댓글", null);
+
+			List<CommentResponse> result = taskCommentService.getComments(otherMember.getPublicId(), projectPublicId, taskPublicId);
+			assertThat(result).hasSize(1);
+		}
+
+		@Test
 		@DisplayName("비공개 프로젝트 비소속 멤버는 댓글 조회 불가 → TASK_NOT_FOUND_OR_ACCESS_DENIED")
 		void nonProjectMemberCannotRead() {
 			assertThatThrownBy(() ->
@@ -265,6 +274,21 @@ class TaskCommentServiceTest {
 					.extracting(e -> ((CustomException) e).getErrorCode())
 					.isEqualTo(TASK_NOT_FOUND_OR_ACCESS_DENIED);
 		}
+
+		@Test
+		@DisplayName("공개 프로젝트는 워크스페이스 멤버면 댓글 목록 조회 가능")
+		void wsMemberCanReadCommentsOnPublicProject() {
+			UUID publicTaskId = taskService.createTask(
+					owner.getPublicId(), publicProjectPublicId,
+					new CreateTaskRequest("공개 업무", null, owner.getPublicId(), TaskPriority.LOW, null)
+			);
+			taskCommentService.createComment(owner.getPublicId(), publicProjectPublicId, publicTaskId, "공개 댓글", null);
+
+			// wsOutsider는 공개 프로젝트 멤버는 아니지만 워크스페이스 멤버이므로 조회 가능
+			List<CommentResponse> result = taskCommentService.getComments(wsOutsider.getPublicId(), publicProjectPublicId, publicTaskId);
+			assertThat(result).hasSize(1);
+		}
+
 	}
 
 	@Nested
