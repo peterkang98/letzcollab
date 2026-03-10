@@ -82,23 +82,18 @@ public class Task extends PublicIdAndFullAuditBaseEntity {
 
 	public static Task createTask(Project project, String name, String description, User assignee,
 								  TaskPriority priority, Task parentTask, User reporter, LocalDate dueDate) {
-		Task task = Task.builder()
-						.project(project)
-						.name(name)
-						.description(description)
-						.status(TaskStatus.TODO)
-						.assignee(assignee)
-						.priority(priority)
-						.parentTask(parentTask)
-						.reporter(reporter)
-						.dueDate(dueDate)
-						.build();
 
-		if (parentTask != null) {
-			parentTask.getSubTasks().add(task);
-		}
-
-		return task;
+		return Task.builder()
+				   .project(project)
+				   .name(name)
+				   .description(description)
+				   .status(TaskStatus.TODO)
+				   .assignee(assignee)
+				   .priority(priority)
+				   .parentTask(parentTask)
+				   .reporter(reporter)
+				   .dueDate(dueDate)
+				   .build();
 	}
 
 	public void update(String name, String description, TaskStatus status,
