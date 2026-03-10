@@ -62,7 +62,12 @@ public enum ErrorCode {
 
 	// --- Task (T) ---
 	TASK_NOT_FOUND_OR_ACCESS_DENIED(HttpStatus.NOT_FOUND, "T001", "업무가 존재하지 않거나 접근 권한이 없습니다."),
-	CANNOT_ASSIGN_TASK_TO_VIEWER(HttpStatus.BAD_REQUEST, "T002", "업무를 조회자에게 할당할 수 없습니다.");
+	CANNOT_ASSIGN_TASK_TO_VIEWER(HttpStatus.BAD_REQUEST, "T002", "업무를 조회자에게 할당할 수 없습니다."),
+
+	// --- Task Comment (TC) ---
+	COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "TC001", "댓글을 찾을 수 없습니다."),
+	COMMENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "TC002", "댓글 작성자만 수정/삭제할 수 있습니다."),
+	COMMENT_REPLY_DEPTH_EXCEEDED(HttpStatus.BAD_REQUEST, "TC003", "대댓글에는 답글을 달 수 없습니다.");
 
 	private final HttpStatus status;
 	private final String code;
