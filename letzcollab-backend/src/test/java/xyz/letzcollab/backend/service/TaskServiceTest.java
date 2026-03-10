@@ -423,11 +423,12 @@ class TaskServiceTest {
 					leader.getPublicId(), projectId, parentId,
 					new CreateTaskRequest("하위 업무", null, member.getPublicId(), TaskPriority.LOW, null));
 
+			em.flush();
+			em.clear();
+
 			taskService.updateTask(leader.getPublicId(), projectId, parentId,
 					new UpdateTaskRequest(null, null, TaskStatus.CANCELLED, null, null, null));
 
-			em.flush();
-			em.clear();
 
 			Task parent = taskRepository.findTaskDetailsByPublicId(parentId).orElseThrow();
 			Task subTask = taskRepository.findTaskDetailsByPublicId(subTaskId).orElseThrow();
@@ -461,9 +462,6 @@ class TaskServiceTest {
 
 			taskService.deleteTask(leader.getPublicId(), projectId, taskId);
 
-			em.flush();
-			em.clear();
-
 			assertThat(taskRepository.findTaskDetailsByPublicId(taskId)).isEmpty();
 		}
 
@@ -475,10 +473,10 @@ class TaskServiceTest {
 					leader.getPublicId(), projectId, parentId,
 					new CreateTaskRequest("하위 업무", null, member.getPublicId(), TaskPriority.LOW, null));
 
-			taskService.deleteTask(leader.getPublicId(), projectId, parentId);
-
 			em.flush();
 			em.clear();
+
+			taskService.deleteTask(leader.getPublicId(), projectId, parentId);
 
 			assertThat(taskRepository.findTaskDetailsByPublicId(parentId)).isEmpty();
 			assertThat(taskRepository.findTaskDetailsByPublicId(subTaskId)).isEmpty();
