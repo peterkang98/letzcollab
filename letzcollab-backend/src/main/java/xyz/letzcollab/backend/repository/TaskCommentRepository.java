@@ -20,7 +20,7 @@ public interface TaskCommentRepository extends JpaRepository<TaskComment, Long> 
 			"ORDER BY c.createdAt ASC")
 	List<TaskComment> findTopLevelCommentsWithChildren(@Param("taskId") Long taskId);
 
-	// 수정 권한 검증용 - 작성자 fetch join
+	// 수정 권한 검증용 + 대댓글 알림용 - 작성자 fetch join
 	@Query("SELECT c FROM TaskComment c " +
 			"JOIN FETCH c.author " +
 			"WHERE c.id = :commentId")

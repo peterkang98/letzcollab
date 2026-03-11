@@ -2,6 +2,7 @@ package xyz.letzcollab.backend.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -12,7 +13,10 @@ import xyz.letzcollab.backend.entity.Project;
 import xyz.letzcollab.backend.entity.ProjectMember;
 import xyz.letzcollab.backend.entity.User;
 import xyz.letzcollab.backend.entity.WorkspaceMember;
+import xyz.letzcollab.backend.entity.vo.NotificationType;
 import xyz.letzcollab.backend.entity.vo.ProjectRole;
+import xyz.letzcollab.backend.entity.vo.ReferenceType;
+import xyz.letzcollab.backend.global.event.dto.NotificationEvent;
 import xyz.letzcollab.backend.global.exception.CustomException;
 import xyz.letzcollab.backend.global.exception.ErrorCode;
 import xyz.letzcollab.backend.repository.ProjectMemberRepository;
@@ -28,6 +32,9 @@ import static xyz.letzcollab.backend.global.exception.ErrorCode.*;
 @Transactional
 @Slf4j
 public class ProjectMemberService {
+
+	private final ApplicationEventPublisher eventPublisher;
+
 	private final ProjectMemberRepository projectMemberRepository;
 	private final WorkspaceMemberRepository workspaceMemberRepository;
 
@@ -66,6 +73,11 @@ public class ProjectMemberService {
 		projectMemberRepository.save(projectMember);
 		log.info("프로젝트 멤버 추가 성공 - requesterId={}, targetUserId={}, projectId={}, role={}",
 				requesterPublicId, req.targetUserPublicId(), projectPublicId, req.role());
+
+		eventPublisher.publishEvent(new NotificationEvent(
+				user.getId(), NotificationType.PROJECT_MEMBER_ADDED, ReferenceType.PROJECT,
+				projectPublicId, workspacePublicId, String.format("'%s' 프로젝트에 멤버로 추가되었습니다.", project.getName())
+		));
 	}
 
 	/**
@@ -74,7 +86,7 @@ public class ProjectMemberService {
 	 * - 자기 자신의 권한보다 낮은 권한을 가진 대상만 수정 가능
 	 */
 	public void updateOtherMember(
-			UUID requesterPublicId, UUID projectPublicId, UpdateOtherMemberRequest req
+			UUID requesterPublicId, UUID workspacePublicId, UUID projectPublicId, UpdateOtherMemberRequest req
 	) {
 		if (requesterPublicId.equals(req.targetUserPublicId())) throw new CustomException(USE_SELF_UPDATE_API);
 
@@ -97,6 +109,15 @@ public class ProjectMemberService {
 		target.updateInfo(req.newPosition(), req.newRole());
 		log.info("타인의 프로젝트 멤버 정보 수정 - requesterId={}, targetUserId={}, projectId={}, newRole={}",
 				requesterPublicId, req.targetUserPublicId(), projectPublicId, req.newRole());
+
+		// 권한 변경 시 알림 발송
+		if (req.newRole() != null) {
+			eventPublisher.publishEvent(new NotificationEvent(
+					target.getUser().getId(), NotificationType.PROJECT_ROLE_CHANGED, ReferenceType.PROJECT,
+					projectPublicId, workspacePublicId,
+					String.format("'%s' 프로젝트에서 '%s' 관리자로 권한이 변경되었습니다", project.getName(), req.newRole().getDescription())
+			));
+		}
 	}
 
 	public void updateMyself(
@@ -144,7 +165,7 @@ public class ProjectMemberService {
 	 * 1. 리더는 강퇴 불가
 	 * 2. 리더만 ADMIN을 강퇴 시킬 수 있음 = ADMIN은 다른 ADMIN 강퇴 불가
 	 */
-	public void kickMember(UUID requesterPublicId, UUID targetUserPublicId, UUID projectPublicId) {
+	public void kickMember(UUID requesterPublicId, UUID workspacePublicId, UUID targetUserPublicId, UUID projectPublicId) {
 		if (requesterPublicId.equals(targetUserPublicId)) throw new CustomException(USE_SELF_DELETE_API);
 
 		List<ProjectMember> members = projectMemberRepository.findMembersWithProjectAndLeader(
@@ -167,6 +188,13 @@ public class ProjectMemberService {
 		projectMemberRepository.delete(target);
 		log.info("프로젝트 멤버 강퇴 - requesterId={}, targetUserId={}, projectId={}",
 				requesterPublicId, targetUserPublicId, projectPublicId);
+
+		// 알림 발송
+		eventPublisher.publishEvent(new NotificationEvent(
+				target.getUser().getId(), NotificationType.PROJECT_MEMBER_REMOVED, ReferenceType.PROJECT,
+				projectPublicId, workspacePublicId,
+				String.format("'%s' 프로젝트에서 강퇴되었습니다", project.getName())
+		));
 	}
 
 	// 헬퍼

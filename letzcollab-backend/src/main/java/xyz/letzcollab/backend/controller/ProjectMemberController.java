@@ -55,12 +55,13 @@ public class ProjectMemberController {
 	@PatchMapping("/{targetUserPublicId}")
 	public ResponseEntity<ApiResponse<Void>> updateOtherMember(
 			@AuthenticationPrincipal CustomUserDetails userDetails,
+			@PathVariable UUID workspacePublicId,
 			@PathVariable UUID projectPublicId,
 			@PathVariable UUID targetUserPublicId,
 			@RequestBody UpdateOtherMemberRequest request
 	) {
 		projectMemberService.updateOtherMember(
-				userDetails.getPublicId(), projectPublicId,
+				userDetails.getPublicId(), workspacePublicId, projectPublicId,
 				new UpdateOtherMemberRequest(targetUserPublicId, request.newPosition(), request.newRole())
 		);
 		return ResponseEntity.ok(ApiResponse.success("프로젝트 멤버 정보/권한 수정 완료!"));
@@ -84,10 +85,11 @@ public class ProjectMemberController {
 	@DeleteMapping("/{targetUserPublicId}")
 	public ResponseEntity<ApiResponse<Void>> kickMember(
 			@AuthenticationPrincipal CustomUserDetails userDetails,
+			@PathVariable UUID workspacePublicId,
 			@PathVariable UUID projectPublicId,
 			@PathVariable UUID targetUserPublicId
 	) {
-		projectMemberService.kickMember(userDetails.getPublicId(), targetUserPublicId, projectPublicId);
+		projectMemberService.kickMember(userDetails.getPublicId(), workspacePublicId, targetUserPublicId, projectPublicId);
 		return ResponseEntity.ok(ApiResponse.success("프로젝트에서 타 멤버 강퇴 완료."));
 	}
 
