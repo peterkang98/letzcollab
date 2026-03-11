@@ -2,6 +2,7 @@ package xyz.letzcollab.backend.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -11,8 +12,11 @@ import xyz.letzcollab.backend.entity.Project;
 import xyz.letzcollab.backend.entity.ProjectMember;
 import xyz.letzcollab.backend.entity.Task;
 import xyz.letzcollab.backend.entity.User;
+import xyz.letzcollab.backend.entity.vo.NotificationType;
 import xyz.letzcollab.backend.entity.vo.ProjectRole;
+import xyz.letzcollab.backend.entity.vo.ReferenceType;
 import xyz.letzcollab.backend.entity.vo.TaskStatus;
+import xyz.letzcollab.backend.global.event.dto.NotificationEvent;
 import xyz.letzcollab.backend.global.exception.CustomException;
 import xyz.letzcollab.backend.repository.ProjectMemberRepository;
 import xyz.letzcollab.backend.repository.ProjectRepository;
@@ -29,6 +33,8 @@ import static xyz.letzcollab.backend.global.exception.ErrorCode.*;
 @Transactional
 @Slf4j
 public class TaskService {
+
+	private final ApplicationEventPublisher eventPublisher;
 
 	private final TaskRepository taskRepository;
 	private final ProjectMemberRepository projectMemberRepository;
@@ -74,6 +80,8 @@ public class TaskService {
 		log.info("업무 생성 - taskName={}, projectId={}, reporterId={}, assigneeId={}",
 				req.name(), projectPublicId, reporterPublicId, req.assigneePublicId());
 
+		sendTaskAssignedNotification(reporterPublicId, assigneeUser, task, req.name(), projectPublicId);
+
 		return task.getPublicId();
 	}
 
@@ -113,6 +121,8 @@ public class TaskService {
 		log.info("하위 업무 생성 - taskName={}, parentTaskId={}, reporterId={}, assigneeId={}",
 				req.name(), parentTaskPublicId, reporterPublicId, req.assigneePublicId());
 
+		sendTaskAssignedNotification(reporterPublicId, assigneeUser, subTask, req.name(), projectPublicId);
+
 		return subTask.getPublicId();
 	}
 
@@ -150,7 +160,11 @@ public class TaskService {
 				: taskRepository.findByPublicIdWithReporterAndAssignee(taskPublicId)
 								.orElseThrow(() -> new CustomException(TASK_NOT_FOUND_OR_ACCESS_DENIED));
 
-		boolean isAdmin    = requester.getRole() == ProjectRole.ADMIN;
+		// ── 알림용 캡처 (변경 전) ──
+		TaskStatus previousStatus = task.getStatus();
+		User previousAssignee = task.getAssignee();
+
+		boolean isAdmin = requester.getRole() == ProjectRole.ADMIN;
 		boolean isReporter = task.getReporter().getPublicId().equals(requesterPublicId);
 		boolean isAssignee = task.getAssignee().getPublicId().equals(requesterPublicId);
 
@@ -161,6 +175,8 @@ public class TaskService {
 		} else {
 			throw new CustomException(INSUFFICIENT_PERMISSION);
 		}
+
+		sendTaskUpdateNotifications(requesterPublicId, projectPublicId, task, previousStatus, previousAssignee);
 
 		String role = isAdmin ? "ADMIN" : isReporter ? "REPORTER" : "ASSIGNEE";
 		log.info("업무 수정 - taskId={}, projectId={}, requesterId={}, role={}, updatedFields={}",
@@ -181,7 +197,7 @@ public class TaskService {
 		Task task = taskRepository.findTaskWithSubTasksAndMembers(taskPublicId)
 								  .orElseThrow(() -> new CustomException(TASK_NOT_FOUND_OR_ACCESS_DENIED));
 
-		boolean isAdmin    = requester.getRole() == ProjectRole.ADMIN;
+		boolean isAdmin = requester.getRole() == ProjectRole.ADMIN;
 		boolean isReporter = task.getReporter().getPublicId().equals(requesterPublicId);
 
 		if (!isAdmin && !isReporter) {
@@ -204,7 +220,7 @@ public class TaskService {
 
 	// ADMIN 또는 부모 업무의 reporter/assignee만 하위 업무 생성 가능
 	private void validateCanCreateSubtask(UUID reporterPublicId, ProjectMember reporter, Task parentTask) {
-		boolean isAdmin          = reporter.getRole() == ProjectRole.ADMIN;
+		boolean isAdmin = reporter.getRole() == ProjectRole.ADMIN;
 		boolean isParentReporter = parentTask.getReporter().getPublicId().equals(reporterPublicId);
 		boolean isParentAssignee = parentTask.getAssignee().getPublicId().equals(reporterPublicId);
 
@@ -288,10 +304,100 @@ public class TaskService {
 
 		// MEMBER는 본인 혹은 다른 MEMBER에게만 할당 가능
 		if (requester.getRole() == ProjectRole.MEMBER) {
-			boolean isSelf   = assigneePublicId.equals(requester.getUser().getPublicId());
+			boolean isSelf = assigneePublicId.equals(requester.getUser().getPublicId());
 			boolean isMember = assigneeRole == ProjectRole.MEMBER;
 			if (!isSelf && !isMember) {
 				throw new CustomException(INSUFFICIENT_PERMISSION);
+			}
+		}
+	}
+
+	// 알림 헬퍼
+	private void publishTaskNotification(Long recipientId, NotificationType type,
+										 UUID taskPublicId, UUID projectPublicId, String message) {
+		eventPublisher.publishEvent(new NotificationEvent(
+				recipientId, type, ReferenceType.TASK, taskPublicId, projectPublicId, message
+		));
+	}
+
+	private void sendTaskAssignedNotification(UUID reporterPublicId, User assigneeUser,
+											  Task task, String taskName, UUID projectPublicId) {
+		if (!reporterPublicId.equals(assigneeUser.getPublicId())) {
+			publishTaskNotification(
+					assigneeUser.getId(), NotificationType.TASK_ASSIGNED, task.getPublicId(), projectPublicId,
+					String.format("'%s' 업무가 회원님에게 할당되었습니다.", taskName)
+			);
+		}
+	}
+
+	/**
+	 * [업무 수정 알림 발송 로직]
+	 * 1. 요청자 제외: 변경을 요청한 당사자(requester)에게는 알림을 보내지 않음.
+	 * 2. 중복 방지: 동일 인물이 여러 역할(Reporter, Assignee 등)을 겸할 경우 알림은 한 번만 발송.
+	 * 3. 관계자 포괄: ADMIN 권한을 가진 제3자가 개입할 수 있으므로, 영향을 받는 모든 관계자(기존/새 담당자, 보고자)를 고려.
+	 * * [1. 상태 변경 알림]
+	 *   - 대상: 보고자(Reporter), 현재 담당자(Assignee)
+	 *   - 조건:
+	 *     - 보고자: 요청자가 아닐 때 발송
+	 *     - 담당자: 요청자가 아니고, 보고자와 동일 인물이 아닐 때 발송 (중복 방지)
+	 * * [2. 담당자 변경 알림]
+	 *   - 대상: 기존 담당자(Previous), 새 담당자(Current), 보고자(Reporter)
+	 *   - 조건:
+	 *     - 기존 담당자: 요청자가 아닐 때 발송 (누군가에 의해 업무에서 제외됨)
+	 *     - 새 담당자: 요청자가 아닐 때 발송 (누군가에 의해 업무가 할당됨 - 셀프 할당 제외)
+	 *     - 보고자: 요청자가 아니고, 기존/새 담당자와 동일 인물이 아닐 때 발송 (ADMIN 권한을 가진 제3자가 변경한 경우 대응)
+	 */
+	private void sendTaskUpdateNotifications(UUID requesterPublicId, UUID projectPublicId, Task task,
+											 TaskStatus previousStatus, User previousAssignee) {
+		UUID taskPublicId = task.getPublicId();
+		User reporter = task.getReporter();
+		User currentAssignee = task.getAssignee();
+
+		// 1. 상태 변경 알림
+		// 원칙: 변경을 요청한 본인(requester)은 제외, 나머지 관계자에게 발송
+		// reporter와 currentAssignee가 동일 인물이면 한 번만 발송
+		if (previousStatus != task.getStatus()) {
+			String statusMessage = String.format("'%s' 업무 상태가 %s(으)로 변경되었습니다.", task.getName(), task.getStatus());
+
+			// reporter에게 (본인이 바꾼 게 아니면)
+			if (!reporter.getPublicId().equals(requesterPublicId)) {
+				publishTaskNotification(reporter.getId(), NotificationType.TASK_STATUS_CHANGED,
+						taskPublicId, projectPublicId, statusMessage);
+			}
+
+			// assignee에게 (본인이 바꾼 게 아니고, reporter와 동일인물이 아니면 중복 방지)
+			if (!currentAssignee.getPublicId().equals(requesterPublicId) && !currentAssignee.getId().equals(reporter.getId())) {
+				publishTaskNotification(currentAssignee.getId(), NotificationType.TASK_STATUS_CHANGED,
+						taskPublicId, projectPublicId, statusMessage);
+			}
+		}
+
+		// 2. 담당자 변경 알림
+		// 원칙: 변경을 요청한 본인(requester)은 제외
+		// ADMIN 권한을 가진 제3자가 변경할 수 있으므로 reporter에게도 알림
+		if (!previousAssignee.getPublicId().equals(currentAssignee.getPublicId())) {
+			// 1. 기존 assignee에게 (본인이 스스로 내려놓은 게 아니라면) (ADMIN 권한을 가진 assignee가 변경한 경우)
+			if (!previousAssignee.getPublicId().equals(requesterPublicId)) {
+				publishTaskNotification(previousAssignee.getId(), NotificationType.TASK_REASSIGNED,
+						taskPublicId, projectPublicId,
+						String.format("'%s' 업무의 담당자에서 제외되었습니다.", task.getName()));
+			}
+
+			// 2. 새 assignee에게 (본인이 셀프 할당한 게 아니라면)
+			if (!currentAssignee.getPublicId().equals(requesterPublicId)) {
+				publishTaskNotification(currentAssignee.getId(), NotificationType.TASK_ASSIGNED,
+						taskPublicId, projectPublicId,
+						String.format("'%s' 업무가 회원님에게 할당되었습니다.", task.getName()));
+			}
+
+			// 3. reporter에게 (ADMIN 권한을 가진 제3자가 변경한 경우 reporter도 알아야 함)
+			// 중복 방지: reporter가 기존/새 assignee로서 이미 알림을 받았다면 제외
+			if (!reporter.getPublicId().equals(requesterPublicId)
+					&& !reporter.getId().equals(previousAssignee.getId())
+					&& !reporter.getId().equals(currentAssignee.getId())) {
+				publishTaskNotification(reporter.getId(), NotificationType.TASK_REASSIGNED,
+						taskPublicId, projectPublicId,
+						String.format("'%s' 업무의 담당자가 변경되었습니다.", task.getName()));
 			}
 		}
 	}
