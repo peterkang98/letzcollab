@@ -23,8 +23,7 @@ import xyz.letzcollab.backend.repository.ProjectRepository;
 import xyz.letzcollab.backend.repository.TaskRepository;
 import xyz.letzcollab.backend.repository.WorkspaceMemberRepository;
 
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static xyz.letzcollab.backend.global.exception.ErrorCode.*;
 
@@ -355,50 +354,55 @@ public class TaskService {
 
 		// 1. 상태 변경 알림
 		// 원칙: 변경을 요청한 본인(requester)은 제외, 나머지 관계자에게 발송
-		// reporter와 currentAssignee가 동일 인물이면 한 번만 발송
 		if (previousStatus != task.getStatus()) {
 			String statusMessage = String.format("'%s' 업무 상태가 %s(으)로 변경되었습니다.", task.getName(), task.getStatus());
 
-			// reporter에게 (본인이 바꾼 게 아니면)
+			Set<Long> statusTargets = new HashSet<>();
+
 			if (!reporter.getPublicId().equals(requesterPublicId)) {
-				publishTaskNotification(reporter.getId(), NotificationType.TASK_STATUS_CHANGED,
-						taskPublicId, projectPublicId, statusMessage);
+				statusTargets.add(reporter.getId());
 			}
 
-			// assignee에게 (본인이 바꾼 게 아니고, reporter와 동일인물이 아니면 중복 방지)
-			if (!currentAssignee.getPublicId().equals(requesterPublicId) && !currentAssignee.getId().equals(reporter.getId())) {
-				publishTaskNotification(currentAssignee.getId(), NotificationType.TASK_STATUS_CHANGED,
-						taskPublicId, projectPublicId, statusMessage);
+			if (!currentAssignee.getPublicId().equals(requesterPublicId)) {
+				statusTargets.add(currentAssignee.getId());
 			}
+
+			statusTargets.forEach(id -> publishTaskNotification(id, NotificationType.TASK_STATUS_CHANGED,
+					taskPublicId, projectPublicId, statusMessage));
 		}
 
 		// 2. 담당자 변경 알림
 		// 원칙: 변경을 요청한 본인(requester)은 제외
 		// ADMIN 권한을 가진 제3자가 변경할 수 있으므로 reporter에게도 알림
 		if (!previousAssignee.getPublicId().equals(currentAssignee.getPublicId())) {
-			// 1. 기존 assignee에게 (본인이 스스로 내려놓은 게 아니라면) (ADMIN 권한을 가진 assignee가 변경한 경우)
+			Map<Long, NotifyAction> assignTargets = new HashMap<>();
+
+			// 1. 기존 assignee에게 (본인이 스스로 내려놓은 게 아니라면)
 			if (!previousAssignee.getPublicId().equals(requesterPublicId)) {
-				publishTaskNotification(previousAssignee.getId(), NotificationType.TASK_REASSIGNED,
-						taskPublicId, projectPublicId,
-						String.format("'%s' 업무의 담당자에서 제외되었습니다.", task.getName()));
+				assignTargets.put(previousAssignee.getId(), new NotifyAction(
+						NotificationType.TASK_REASSIGNED, String.format("'%s' 업무의 담당자에서 제외되었습니다.", task.getName())
+				));
 			}
 
 			// 2. 새 assignee에게 (본인이 셀프 할당한 게 아니라면)
 			if (!currentAssignee.getPublicId().equals(requesterPublicId)) {
-				publishTaskNotification(currentAssignee.getId(), NotificationType.TASK_ASSIGNED,
-						taskPublicId, projectPublicId,
-						String.format("'%s' 업무가 회원님에게 할당되었습니다.", task.getName()));
+				assignTargets.put(currentAssignee.getId(), new NotifyAction(
+						NotificationType.TASK_ASSIGNED, String.format("'%s' 업무가 회원님에게 할당되었습니다.", task.getName())
+				));
 			}
 
 			// 3. reporter에게 (ADMIN 권한을 가진 제3자가 변경한 경우 reporter도 알아야 함)
-			// 중복 방지: reporter가 기존/새 assignee로서 이미 알림을 받았다면 제외
-			if (!reporter.getPublicId().equals(requesterPublicId)
-					&& !reporter.getId().equals(previousAssignee.getId())
-					&& !reporter.getId().equals(currentAssignee.getId())) {
-				publishTaskNotification(reporter.getId(), NotificationType.TASK_REASSIGNED,
-						taskPublicId, projectPublicId,
-						String.format("'%s' 업무의 담당자가 변경되었습니다.", task.getName()));
+			// - 중복 방지: putIfAbsent를 써서 reporter가 기존/새 assignee로서 이미 알림을 받았다면 제외
+			if (!reporter.getPublicId().equals(requesterPublicId)) {
+				assignTargets.put(reporter.getId(), new NotifyAction(
+						NotificationType.TASK_REASSIGNED, String.format("'%s' 업무의 담당자가 변경되었습니다.", task.getName())
+				));
 			}
+
+			assignTargets.forEach((id, action) -> publishTaskNotification(id, action.type(),
+					taskPublicId, projectPublicId, action.message()));
 		}
 	}
 }
+
+record NotifyAction(NotificationType type, String message) {}
