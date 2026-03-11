@@ -21,12 +21,12 @@ import xyz.letzcollab.backend.entity.WorkspaceMember;
 import xyz.letzcollab.backend.entity.vo.NotificationType;
 import xyz.letzcollab.backend.entity.vo.ProjectRole;
 import xyz.letzcollab.backend.entity.vo.ProjectStatus;
-import xyz.letzcollab.backend.entity.vo.WorkspaceRole;
 import xyz.letzcollab.backend.global.event.dto.NotificationEvent;
-import xyz.letzcollab.backend.repository.*;
+import xyz.letzcollab.backend.repository.UserRepository;
+import xyz.letzcollab.backend.repository.WorkspaceMemberRepository;
+import xyz.letzcollab.backend.repository.WorkspaceRepository;
 import xyz.letzcollab.backend.service.ProjectMemberService;
 import xyz.letzcollab.backend.service.ProjectService;
-import xyz.letzcollab.backend.service.WorkspaceMemberService;
 import xyz.letzcollab.backend.service.WorkspaceService;
 
 import java.util.List;
