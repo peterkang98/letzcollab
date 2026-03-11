@@ -6,8 +6,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.letzcollab.backend.TestAuditConfig;
 import xyz.letzcollab.backend.dto.project.AddMemberRequest;
@@ -36,6 +38,9 @@ import static xyz.letzcollab.backend.global.exception.ErrorCode.*;
 @Import(TestAuditConfig.class)
 @DisplayName("ProjectMemberService 통합 테스트")
 class ProjectMemberServiceTest {
+
+	@MockitoBean
+	ApplicationEventPublisher eventPublisher;
 
 	@Autowired
 	ProjectMemberService projectMemberService;
@@ -187,7 +192,7 @@ class ProjectMemberServiceTest {
 		@DisplayName("LEADER가 ADMIN의 직책과 권한을 수정할 수 있다")
 		void leaderCanUpdateAdmin() {
 			UpdateOtherMemberRequest updateReq = new UpdateOtherMemberRequest(wsAdmin.getPublicId(), "신규 포지션", ProjectRole.MEMBER);
-			projectMemberService.updateOtherMember(wsOwner.getPublicId(), projectId, updateReq);
+			projectMemberService.updateOtherMember(wsOwner.getPublicId(), workspace.getPublicId(), projectId, updateReq);
 
 			ProjectMember target = projectMemberRepository.findByUserPublicIdAndProjectPublicId(wsAdmin.getPublicId(), projectId)
 														  .orElseThrow();
@@ -199,7 +204,7 @@ class ProjectMemberServiceTest {
 		@DisplayName("ADMIN이 MEMBER의 권한을 VIEWER로 변경할 수 있다")
 		void adminCanDemoteMember() {
 			UpdateOtherMemberRequest updateReq = new UpdateOtherMemberRequest(wsMember.getPublicId(), null, ProjectRole.VIEWER);
-			projectMemberService.updateOtherMember(wsAdmin.getPublicId(), projectId, updateReq);
+			projectMemberService.updateOtherMember(wsAdmin.getPublicId(), workspace.getPublicId(), projectId, updateReq);
 
 			ProjectMember target = projectMemberRepository.findByUserPublicIdAndProjectPublicId(wsMember.getPublicId(), projectId)
 														  .orElseThrow();
@@ -218,7 +223,7 @@ class ProjectMemberServiceTest {
 
 			// when & then
 			assertThatThrownBy(() -> projectMemberService.updateOtherMember(
-					wsAdmin.getPublicId(), projectId,
+					wsAdmin.getPublicId(), workspace.getPublicId(), projectId,
 					new UpdateOtherMemberRequest(wsAdmin2.getPublicId(), null, ProjectRole.MEMBER)))
 					.isInstanceOf(CustomException.class)
 					.extracting(e -> ((CustomException) e).getErrorCode())
@@ -230,7 +235,7 @@ class ProjectMemberServiceTest {
 		void adminCannotGrantAdminRole() {
 			UpdateOtherMemberRequest updateReq = new UpdateOtherMemberRequest(wsMember.getPublicId(), null, ProjectRole.ADMIN);
 			assertThatThrownBy(() -> projectMemberService.updateOtherMember(
-					wsAdmin.getPublicId(), projectId, updateReq))
+					wsAdmin.getPublicId(), workspace.getPublicId(), projectId, updateReq))
 					.isInstanceOf(CustomException.class)
 					.extracting(e -> ((CustomException) e).getErrorCode())
 					.isEqualTo(INSUFFICIENT_PERMISSION);
@@ -241,7 +246,7 @@ class ProjectMemberServiceTest {
 		void memberCannotUpdate() {
 			UpdateOtherMemberRequest updateReq = new UpdateOtherMemberRequest(wsAdmin.getPublicId(), "새 포지션", null);
 			assertThatThrownBy(() -> projectMemberService.updateOtherMember(
-					wsMember.getPublicId(), projectId, updateReq))
+					wsMember.getPublicId(), workspace.getPublicId(), projectId, updateReq))
 					.isInstanceOf(CustomException.class)
 					.extracting(e -> ((CustomException) e).getErrorCode())
 					.isEqualTo(INSUFFICIENT_PERMISSION);
@@ -252,7 +257,7 @@ class ProjectMemberServiceTest {
 		void selfUpdate() {
 			UpdateOtherMemberRequest updateReq = new UpdateOtherMemberRequest(wsOwner.getPublicId(), null, null);
 			assertThatThrownBy(() -> projectMemberService.updateOtherMember(
-					wsOwner.getPublicId(), projectId, updateReq))
+					wsOwner.getPublicId(), workspace.getPublicId(), projectId, updateReq))
 					.isInstanceOf(CustomException.class)
 					.extracting(e -> ((CustomException) e).getErrorCode())
 					.isEqualTo(USE_SELF_UPDATE_API);
@@ -263,7 +268,7 @@ class ProjectMemberServiceTest {
 		void targetNotFound() {
 			UpdateOtherMemberRequest updateReq = new UpdateOtherMemberRequest(wsOutsider.getPublicId(), null, ProjectRole.MEMBER);
 			assertThatThrownBy(() -> projectMemberService.updateOtherMember(
-					wsOwner.getPublicId(), projectId, updateReq))
+					wsOwner.getPublicId(), workspace.getPublicId(), projectId, updateReq))
 					.isInstanceOf(CustomException.class)
 					.extracting(e -> ((CustomException) e).getErrorCode())
 					.isEqualTo(PROJECT_MEMBER_NOT_FOUND);
@@ -416,7 +421,7 @@ class ProjectMemberServiceTest {
 		@Test
 		@DisplayName("LEADER가 ADMIN을 강퇴하면 멤버 목록에서 제거된다")
 		void leaderCanKickAdmin() {
-			projectMemberService.kickMember(wsOwner.getPublicId(), wsAdmin.getPublicId(), projectId);
+			projectMemberService.kickMember(wsOwner.getPublicId(), workspace.getPublicId(), wsAdmin.getPublicId(), projectId);
 
 			assertThat(projectMemberRepository.existsByProjectPublicIdAndUserPublicId(
 					projectId, wsAdmin.getPublicId())).isFalse();
@@ -425,7 +430,7 @@ class ProjectMemberServiceTest {
 		@Test
 		@DisplayName("ADMIN이 MEMBER를 강퇴할 수 있다")
 		void adminCanKickMember() {
-			projectMemberService.kickMember(wsAdmin.getPublicId(), wsMember.getPublicId(), projectId);
+			projectMemberService.kickMember(wsAdmin.getPublicId(), workspace.getPublicId(), wsMember.getPublicId(), projectId);
 
 			assertThat(projectMemberRepository.existsByProjectPublicIdAndUserPublicId(
 					projectId, wsMember.getPublicId())).isFalse();
@@ -435,7 +440,7 @@ class ProjectMemberServiceTest {
 		@DisplayName("ADMIN이 리더를 강퇴 불가 → INSUFFICIENT_PERMISSION")
 		void adminCannotKickLeader() {
 			assertThatThrownBy(() ->
-					projectMemberService.kickMember(wsAdmin.getPublicId(), wsOwner.getPublicId(), projectId))
+					projectMemberService.kickMember(wsAdmin.getPublicId(), workspace.getPublicId(), wsOwner.getPublicId(), projectId))
 					.isInstanceOf(CustomException.class)
 					.extracting(e -> ((CustomException) e).getErrorCode())
 					.isEqualTo(INSUFFICIENT_PERMISSION);
@@ -451,7 +456,7 @@ class ProjectMemberServiceTest {
 			projectMemberService.addMember(wsOwner.getPublicId(), workspace.getPublicId(), projectId, addMemberRequest);
 
 			assertThatThrownBy(() ->
-					projectMemberService.kickMember(wsAdmin.getPublicId(), wsAdmin2.getPublicId(), projectId))
+					projectMemberService.kickMember(wsAdmin.getPublicId(), workspace.getPublicId(), wsAdmin2.getPublicId(), projectId))
 					.isInstanceOf(CustomException.class)
 					.extracting(e -> ((CustomException) e).getErrorCode())
 					.isEqualTo(INSUFFICIENT_PERMISSION);
@@ -461,7 +466,7 @@ class ProjectMemberServiceTest {
 		@DisplayName("MEMBER가 강퇴를 시도하면 INSUFFICIENT_PERMISSION")
 		void memberCannotKick() {
 			assertThatThrownBy(() ->
-					projectMemberService.kickMember(wsMember.getPublicId(), wsAdmin.getPublicId(), projectId))
+					projectMemberService.kickMember(wsMember.getPublicId(), workspace.getPublicId(), wsAdmin.getPublicId(), projectId))
 					.isInstanceOf(CustomException.class)
 					.extracting(e -> ((CustomException) e).getErrorCode())
 					.isEqualTo(INSUFFICIENT_PERMISSION);
@@ -471,7 +476,7 @@ class ProjectMemberServiceTest {
 		@DisplayName("본인을 강퇴하려 하면 USE_SELF_DELETE_API")
 		void selfKick() {
 			assertThatThrownBy(() ->
-					projectMemberService.kickMember(wsOwner.getPublicId(), wsOwner.getPublicId(), projectId))
+					projectMemberService.kickMember(wsOwner.getPublicId(), workspace.getPublicId(), wsOwner.getPublicId(), projectId))
 					.isInstanceOf(CustomException.class)
 					.extracting(e -> ((CustomException) e).getErrorCode())
 					.isEqualTo(USE_SELF_DELETE_API);
@@ -481,7 +486,7 @@ class ProjectMemberServiceTest {
 		@DisplayName("프로젝트에 없는 사용자를 강퇴하려 하면 PROJECT_MEMBER_NOT_FOUND")
 		void targetNotInProject() {
 			assertThatThrownBy(() ->
-					projectMemberService.kickMember(wsOwner.getPublicId(), wsOutsider.getPublicId(), projectId))
+					projectMemberService.kickMember(wsOwner.getPublicId(), workspace.getPublicId(), wsOutsider.getPublicId(), projectId))
 					.isInstanceOf(CustomException.class)
 					.extracting(e -> ((CustomException) e).getErrorCode())
 					.isEqualTo(PROJECT_MEMBER_NOT_FOUND);

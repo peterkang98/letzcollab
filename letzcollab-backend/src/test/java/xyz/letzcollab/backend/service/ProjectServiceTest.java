@@ -6,10 +6,12 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.letzcollab.backend.TestAuditConfig;
 import xyz.letzcollab.backend.dto.project.*;
@@ -35,6 +37,9 @@ import static xyz.letzcollab.backend.global.exception.ErrorCode.*;
 @Import(TestAuditConfig.class)
 @DisplayName("ProjectService 통합 테스트")
 class ProjectServiceTest {
+
+	@MockitoBean
+	ApplicationEventPublisher eventPublisher;
 
 	@Autowired
 	ProjectService projectService;
