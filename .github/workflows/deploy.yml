@@ -28,7 +28,7 @@ jobs:
       - name: Run Backend Tests
         run: |
           cd letzcollab-backend
-          ./gradlew test
+          ./gradlew test -Dspring.profiles.active=test
 
   build-and-push:
     needs: test
