@@ -45,7 +45,7 @@ public class SecurityConfig {
 			.formLogin(AbstractHttpConfigurer::disable)
 			.authorizeHttpRequests(auth -> {
 				auth.requestMatchers(
-						"api/v1/auth/**",
+						"/v1/auth/**",
 						"/swagger-ui/**",
 						"/v3/api-docs/**",
 						"/swagger-resources/**",
