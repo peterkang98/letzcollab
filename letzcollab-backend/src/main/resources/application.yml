@@ -38,3 +38,8 @@ jwt:
 users:
   admin:
     password: ${ADMIN_PW}
+
+springdoc:
+  swagger-ui:
+    tags-sorter: alpha
+    operations-sorter: alpha
