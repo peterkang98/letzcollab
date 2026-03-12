@@ -18,7 +18,7 @@ import xyz.letzcollab.backend.service.TaskService;
 import java.net.URI;
 import java.util.UUID;
 
-@Tag(name = "04. Task", description = "프로젝트 내 업무 및 하위 업무 관리 API")
+@Tag(name = "05-1. Task", description = "프로젝트 내 업무 및 하위 업무 관리 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/projects/{projectPublicId}/tasks")

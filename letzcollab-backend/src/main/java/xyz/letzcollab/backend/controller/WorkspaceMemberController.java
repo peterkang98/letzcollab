@@ -17,7 +17,7 @@ import xyz.letzcollab.backend.service.WorkspaceMemberService;
 
 import java.util.UUID;
 
-@Tag(name = "02-2. Workspace Member", description = "워크스페이스 멤버 초대, 권한 관리 및 탈퇴 API")
+@Tag(name = "03-2. Workspace Member", description = "워크스페이스 멤버 초대, 권한 관리 및 탈퇴 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/workspaces")

@@ -20,7 +20,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
-@Tag(name = "02-1. Workspace", description = "워크스페이스 생성, 조회, 수정, 삭제 API")
+@Tag(name = "03-1. Workspace", description = "워크스페이스 생성, 조회, 수정, 삭제 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/workspaces")

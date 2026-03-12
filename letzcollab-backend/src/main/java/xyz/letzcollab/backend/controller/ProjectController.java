@@ -18,7 +18,7 @@ import xyz.letzcollab.backend.service.ProjectService;
 import java.net.URI;
 import java.util.UUID;
 
-@Tag(name = "03-1. Project", description = "프로젝트 관리 및 검색 API")
+@Tag(name = "04-1. Project", description = "프로젝트 관리 및 검색 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/workspaces/{workspacePublicId}/projects")

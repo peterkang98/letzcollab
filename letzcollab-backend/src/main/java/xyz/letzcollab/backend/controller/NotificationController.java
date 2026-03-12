@@ -13,7 +13,7 @@ import xyz.letzcollab.backend.global.dto.ApiResponse;
 import xyz.letzcollab.backend.global.security.userdetails.CustomUserDetails;
 import xyz.letzcollab.backend.service.NotificationService;
 
-@Tag(name = "6. Notification", description = "사용자 알림 조회 및 읽음 처리 API")
+@Tag(name = "06. Notification", description = "사용자 알림 조회 및 읽음 처리 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/notifications")

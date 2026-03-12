@@ -17,7 +17,7 @@ import xyz.letzcollab.backend.service.TaskCommentService;
 import java.util.List;
 import java.util.UUID;
 
-@Tag(name = "5. Task Comment", description = "업무 댓글 및 대댓글 관리 API")
+@Tag(name = "05-2. Task Comment", description = "업무 댓글 및 대댓글 관리 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/projects/{projectPublicId}/tasks/{taskPublicId}/comments")
