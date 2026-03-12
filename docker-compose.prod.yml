@@ -16,16 +16,11 @@ services:
     image: ghcr.io/${GITHUB_REPOSITORY}/backend:latest
     container_name: letzcollab-backend
     restart: always
-    environment:
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME}
-      JWT_ENC_KEY: ${JWT_ENC_KEY}
-      JWT_ACCESS_EXP_TIME: ${JWT_ACCESS_EXP_TIME}
-      EMAIL_USERNAME: ${EMAIL_USERNAME}
-      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
     depends_on:
       - db
+    env_file:
+      # secrets.ENV_FILE
+      - .env
     networks:
       - letzcollab-net
 
@@ -37,12 +32,22 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      # SSL 증명서 옮기기
-      - /etc/letsencrypt:/etc/letsencrypt:ro
+      # SSL 증명서 참조
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+      # nginx 설정 참조
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - backend
     networks:
       - letzcollab-net
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
 
 networks:
   letzcollab-net:
