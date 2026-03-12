@@ -79,16 +79,16 @@ jobs:
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORD }}
           source: "docker-compose.prod.yml,nginx.conf"
-          target: "/home/${{ secrets.USERNAME }}/letzcollab"
+          target: "/root/letzcollab"
 
       - name: Execute Docker Compose on NCP
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
+          username: root
           password: ${{ secrets.PASSWORD }}
           script: |
-            cd /home/${{ secrets.USERNAME }}/letzcollab
+            cd /root/letzcollab
             
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
