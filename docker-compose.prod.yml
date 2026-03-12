@@ -13,7 +13,7 @@ services:
       - letzcollab-net
 
   backend:
-    image: ghcr.io/${GITHUB_REPOSITORY}/backend:latest
+    image: ghcr.io/peterkang98/backend:latest
     container_name: letzcollab-backend
     restart: always
     depends_on:
@@ -25,7 +25,7 @@ services:
       - letzcollab-net
 
   frontend:
-    image: ghcr.io/${GITHUB_REPOSITORY}/frontend:latest
+    image: ghcr.io/peterkang98/frontend:latest
     container_name: letzcollab-frontend
     restart: always
     ports:

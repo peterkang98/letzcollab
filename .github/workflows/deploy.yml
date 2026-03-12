@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 permissions:
   contents: read
   packages: write
@@ -34,14 +37,10 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     outputs:
-      repo_owner: ${{ steps.prep.outputs.repo_owner }}
+      repo_owner: peterkang98
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Prepare Repo Name
-        id: prep
-        run: echo "repo_owner=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -55,14 +54,14 @@ jobs:
         with:
           context: ./letzcollab-backend
           push: true
-          tags: ghcr.io/${{ steps.prep.outputs.repo_owner }}/backend:latest
+          tags: ghcr.io/peterkang98/backend:latest
 
       - name: Build and Push Frontend
         uses: docker/build-push-action@v5
         with:
           context: ./letzcollab-frontend
           push: true
-          tags: ghcr.io/${{ steps.prep.outputs.repo_owner }}/frontend:latest
+          tags: ghcr.io/peterkang98/frontend:latest
 
 
   deploy:
