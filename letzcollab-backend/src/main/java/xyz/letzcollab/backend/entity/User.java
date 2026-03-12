@@ -91,6 +91,11 @@ public class User extends PublicIdAndDateBaseEntity {
 		}
 	}
 
+	public void updateProfile(String name, String phoneNumber) {
+		if (name != null) this.name = name;
+		if(phoneNumber != null) this.phoneNumber = phoneNumber;
+	}
+
 	public void resetPassword(String newPassword) {
 		this.password = newPassword;
 	}
