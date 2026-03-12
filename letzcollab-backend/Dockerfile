@@ -1,0 +1,16 @@
+# 빌드 단계
+FROM eclipse-temurin:21-jdk-alpine AS build
+WORKDIR /app
+COPY gradlew .
+COPY gradle gradle
+COPY build.gradle .
+COPY settings.gradle .
+COPY src src
+RUN chmod +x ./gradlew
+RUN ./gradlew bootJar -x test
+
+# 실행 단계
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=build /app/build/libs/*.jar app.jar
+ENTRYPOINT["java", "-Dspring.profiles.active=prod", "-jar", "app.jar"]
