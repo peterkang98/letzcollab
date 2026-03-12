@@ -1,5 +1,7 @@
 package xyz.letzcollab.backend.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -16,6 +18,7 @@ import xyz.letzcollab.backend.service.ProjectService;
 import java.net.URI;
 import java.util.UUID;
 
+@Tag(name = "03-1. Project", description = "프로젝트 관리 및 검색 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/workspaces/{workspacePublicId}/projects")
@@ -25,6 +28,7 @@ public class ProjectController {
 	/**
 	 * 프로젝트 생성
 	 */
+
 	@PostMapping
 	public ResponseEntity<ApiResponse<Void>> createProject(
 			@AuthenticationPrincipal CustomUserDetails userDetails,
@@ -47,6 +51,7 @@ public class ProjectController {
 	/**
 	 * 프로젝트 목록 조회 (검색 조건 + 페이지네이션)
 	 */
+	@Operation(summary = "프로젝트 목록 조회", description = "워크스페이스 내 프로젝트들을 검색 조건과 페이징에 맞게 조회합니다. (해당 워크스페이스의 멤버만 가능)")
 	@GetMapping
 	public ResponseEntity<ApiResponse<Page<ProjectResponse>>> getMyProjects(
 			@AuthenticationPrincipal CustomUserDetails userDetails,
@@ -63,6 +68,7 @@ public class ProjectController {
 	/**
 	 * 프로젝트 상세 조회
 	 */
+	@Operation(summary = "프로젝트 상세 조회", description = "해당 프로젝트의 상세 정보와 멤버 목록을 조회합니다. (해당 프로젝트가 속한 워크스페이스의 멤버만 가능)")
 	@GetMapping("/{projectPublicId}")
 	public ResponseEntity<ApiResponse<ProjectDetailsResponse>> getProjectDetails(
 			@AuthenticationPrincipal CustomUserDetails userDetails,
@@ -78,6 +84,7 @@ public class ProjectController {
 	/**
 	 * 프로젝트 정보 수정 (이름, 설명, 상태, 기간, 공개 여부)
 	 */
+	@Operation(summary = "프로젝트 정보 수정", description = "프로젝트 정보(이름, 설명, 상태, 기간, 공개여부)를 수정합니다. (ADMIN 이상만 가능. 공개 여부는 LEADER만 수정 가능)")
 	@PatchMapping("/{projectPublicId}")
 	public ResponseEntity<ApiResponse<Void>> updateProject(
 			@AuthenticationPrincipal CustomUserDetails userDetails,
@@ -91,6 +98,7 @@ public class ProjectController {
 	/**
 	 * 프로젝트 삭제 (Soft Delete)
 	 */
+	@Operation(summary = "프로젝트 삭제", description = "해당 프로젝트를 삭제(Soft Delete)합니다. (LEADER 전용)")
 	@DeleteMapping("/{projectPublicId}")
 	public ResponseEntity<ApiResponse<Void>> deleteProject(
 			@AuthenticationPrincipal CustomUserDetails userDetails,
