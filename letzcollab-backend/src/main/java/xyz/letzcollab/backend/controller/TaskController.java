@@ -21,7 +21,7 @@ import java.util.UUID;
 @Tag(name = "05-1. Task", description = "프로젝트 내 업무 및 하위 업무 관리 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/projects/{projectPublicId}/tasks")
+@RequestMapping("/v1/projects/{projectPublicId}/tasks")
 public class TaskController {
 
 	private final TaskService taskService;
@@ -60,7 +60,7 @@ public class TaskController {
 				userDetails.getPublicId(), projectPublicId, parentTaskPublicId, request);
 
 		URI location = ServletUriComponentsBuilder
-				.fromUriString("/api/v1/projects/{projectPublicId}/tasks/{id}")
+				.fromUriString("/v1/projects/{projectPublicId}/tasks/{id}")
 				.buildAndExpand(projectPublicId, subTaskPublicId)
 				.toUri();
 

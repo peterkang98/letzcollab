@@ -18,7 +18,7 @@ import java.net.URI;
 @Tag(name = "01. Auth", description = "회원가입, 로그인 및 이메일 인증 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/v1/auth")
 public class AuthController {
 	private final AuthService authService;
 
@@ -26,7 +26,7 @@ public class AuthController {
 	@PostMapping("/signup")
 	public ResponseEntity<ApiResponse<Void>> signup(@Valid @RequestBody SignupRequest req) {
 		authService.signup(req);
-		return ResponseEntity.created(URI.create("/api/v1/users/me"))
+		return ResponseEntity.created(URI.create("/v1/users/me"))
 							 .body(ApiResponse.success("회원가입 성공! 로그인은 이메일 인증 후 가능합니다. 30분 이내에 이메일 인증을 완료해주세요"));
 	}
 

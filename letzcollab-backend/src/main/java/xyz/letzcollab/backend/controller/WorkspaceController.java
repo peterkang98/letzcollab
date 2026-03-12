@@ -23,7 +23,7 @@ import java.util.UUID;
 @Tag(name = "03-1. Workspace", description = "워크스페이스 생성, 조회, 수정, 삭제 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/workspaces")
+@RequestMapping("/v1/workspaces")
 public class WorkspaceController {
 	private final WorkspaceService workspaceService;
 

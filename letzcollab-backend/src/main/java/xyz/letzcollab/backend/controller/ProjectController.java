@@ -21,7 +21,7 @@ import java.util.UUID;
 @Tag(name = "04-1. Project", description = "프로젝트 관리 및 검색 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/workspaces/{workspacePublicId}/projects")
+@RequestMapping("/v1/workspaces/{workspacePublicId}/projects")
 public class ProjectController {
 	private final ProjectService projectService;
 

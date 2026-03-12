@@ -16,7 +16,7 @@ import xyz.letzcollab.backend.service.NotificationService;
 @Tag(name = "06. Notification", description = "사용자 알림 조회 및 읽음 처리 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/notifications")
+@RequestMapping("/v1/notifications")
 public class NotificationController {
 
 	private final NotificationService notificationService;

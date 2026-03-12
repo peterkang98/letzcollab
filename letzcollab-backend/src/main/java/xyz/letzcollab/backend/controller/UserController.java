@@ -16,7 +16,7 @@ import xyz.letzcollab.backend.service.UserService;
 @Tag(name = "02. User", description = "현재 로그인한 사용자의 정보 조회/수정/탈퇴 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/users")
+@RequestMapping("/v1/users")
 public class UserController {
 	private final UserService userService;
 

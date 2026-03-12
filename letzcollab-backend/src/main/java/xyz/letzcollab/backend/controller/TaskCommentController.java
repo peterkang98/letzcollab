@@ -20,7 +20,7 @@ import java.util.UUID;
 @Tag(name = "05-2. Task Comment", description = "업무 댓글 및 대댓글 관리 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/projects/{projectPublicId}/tasks/{taskPublicId}/comments")
+@RequestMapping("/v1/projects/{projectPublicId}/tasks/{taskPublicId}/comments")
 public class TaskCommentController {
 
 	private final TaskCommentService taskCommentService;

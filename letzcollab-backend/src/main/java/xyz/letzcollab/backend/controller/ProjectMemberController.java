@@ -19,7 +19,7 @@ import java.util.UUID;
 @Tag(name = "04-2. Project Member", description = "프로젝트 멤버 추가, 관리 및 강퇴/탈퇴 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/workspaces/{workspacePublicId}/projects/{projectPublicId}/members")
+@RequestMapping("/v1/workspaces/{workspacePublicId}/projects/{projectPublicId}/members")
 public class ProjectMemberController {
 	private final ProjectMemberService projectMemberService;
 
