@@ -44,9 +44,6 @@ public class DataInitializer implements CommandLineRunner {
 	private final WorkspaceMemberRepository workspaceMemberRepository;
 	private final UserRepository userRepository;
 
-	@Value("${users.admin.password}")
-	private String adminPassword;
-
 	@Override
 	@Transactional
 	public void run(String... args) throws Exception {
@@ -69,7 +66,7 @@ public class DataInitializer implements CommandLineRunner {
 		User adminUser = User.createAdminUser(
 				"admin",
 				"admin@letzcollab.xyz",
-				passwordEncoder.encode(adminPassword),
+				passwordEncoder.encode("123456"),
 				"010-1234-5678"
 		);
 
