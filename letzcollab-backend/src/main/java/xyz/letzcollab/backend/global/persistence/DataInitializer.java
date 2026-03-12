@@ -48,6 +48,8 @@ public class DataInitializer implements CommandLineRunner {
 	@Transactional
 	public void run(String... args) throws Exception {
 
+		if (userRepository.existsByEmail("honggildong@naver.com")) return;
+
 		// 사용자
 		User dummyUser = User.createDummyUser(
 				"홍길동",
