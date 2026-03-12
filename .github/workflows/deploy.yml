@@ -1,0 +1,102 @@
+name: Deploy to NCP (GHCR Build & Push)
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./letzcollab-backend/gradlew
+
+      - name: Run Backend Tests
+        run: |
+          cd letzcollab-backend
+          ./gradlew test
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      repo_owner: ${{ steps.prep.outputs.repo_owner }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Prepare Repo Name
+        id: prep
+        run: echo "repo_owner=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./letzcollab-backend
+          push: true
+          tags: ghcr.io/${{ steps.prep.outputs.repo_owner }}/backend:latest
+
+      - name: Build and Push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./letzcollab-frontend
+          push: true
+          tags: ghcr.io/${{ steps.prep.outputs.repo_owner }}/frontend:latest
+
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Copy Config Files to NCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          source: "docker-compose.prod.yml,nginx.conf"
+          target: "/home/${{ secrets.USERNAME }}/letzcollab"
+
+      - name: Execute Docker Compose on NCP
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          script: |
+            cd /home/${{ secrets.USERNAME }}/letzcollab
+            
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            cat << 'EOF' > .env
+            ${{ secrets.ENV_FILE }}
+            EOF
+            
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
+            
+            docker image prune -f
