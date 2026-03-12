@@ -2,3 +2,17 @@ decorator:
   datasource:
     p6spy:
       enable-logging: false
+      multiline: false
+    enabled: false
+
+spring:
+  datasource:
+    url: jdbc:postgresql://db:5432/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+frontend:
+  base-url: https://letzcollab.xyz
