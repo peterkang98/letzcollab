@@ -60,7 +60,7 @@ class SecurityConfigTest {
 		@Test
 		@DisplayName("POST /api/v1/auth/** 는 인증 없이 접근 가능하다")
 		void authEndpoint_noTokenRequired() throws Exception {
-			mockMvc.perform(post("/api/v1/auth/login"))
+			mockMvc.perform(post("/api/v1/auth/login").contextPath("/api"))
 				   .andExpect(status().is(not(is(401))))
 				   .andExpect(status().is(not(is(403))));
 		}
@@ -68,7 +68,7 @@ class SecurityConfigTest {
 		@Test
 		@DisplayName("GET /api/v1/auth/** 는 인증 없이 접근 가능하다")
 		void authEndpointGet_noTokenRequired() throws Exception {
-			mockMvc.perform(get("/api/v1/auth/check"))
+			mockMvc.perform(get("/api/v1/auth/check").contextPath("/api"))
 				   .andExpect(status().is(not(is(401))))
 				   .andExpect(status().is(not(is(403))));
 		}
@@ -81,7 +81,7 @@ class SecurityConfigTest {
 		@Test
 		@DisplayName("JWT 없이 보호된 경로에 접근하면 401을 반환한다")
 		void protectedEndpoint_withNoToken_returns401() throws Exception {
-			mockMvc.perform(get("/api/v1/users/me"))
+			mockMvc.perform(get("/api/v1/users/me").contextPath("/api"))
 				   .andExpect(status().isUnauthorized());
 		}
 
@@ -91,7 +91,7 @@ class SecurityConfigTest {
 			String token = createValidToken();
 
 			// 404는 컨트롤러가 없어서 발생 - 보안 필터는 통과한 것
-			mockMvc.perform(get("/api/v1/users/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+			mockMvc.perform(get("/api/v1/users/me").contextPath("/api").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
 				   .andExpect(status().is(not(is(401))))
 				   .andExpect(status().is(not(is(403))));
 		}
@@ -101,7 +101,7 @@ class SecurityConfigTest {
 		void validCookieToken_passesFilter() throws Exception {
 			String token = createValidToken();
 
-			mockMvc.perform(get("/api/v1/users/me").cookie(new Cookie("accessToken", token)))
+			mockMvc.perform(get("/api/v1/users/me").contextPath("/api").cookie(new Cookie("accessToken", token)))
 				   .andExpect(status().is(not(is(401))))
 				   .andExpect(status().is(not(is(403))));
 		}
@@ -116,6 +116,7 @@ class SecurityConfigTest {
 		@DisplayName("허용된 Origin의 Preflight 요청에 200 을 반환한다")
 		void cors_allowedOrigin_preflightSuccess() throws Exception {
 			mockMvc.perform(options("/api/v1/auth/login")
+						   .contextPath("/api")
 						   .header(HttpHeaders.ORIGIN, "http://localhost:5173")
 						   .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST"))
 				   .andExpect(status().isOk())
@@ -128,6 +129,7 @@ class SecurityConfigTest {
 		@DisplayName("허용되지 않은 Origin의 Preflight 요청에는 Access-Control-Allow-Origin 헤더가 없다")
 		void cors_disallowedOrigin_noAcaoHeader() throws Exception {
 			mockMvc.perform(options("/api/v1/auth/login")
+						   .contextPath("/api")
 						   .header(HttpHeaders.ORIGIN, "http://evil.com")
 						   .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST"))
 				   .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
@@ -137,6 +139,7 @@ class SecurityConfigTest {
 		@DisplayName("X-Client-Type 커스텀 헤더가 허용된다")
 		void cors_customHeader_allowed() throws Exception {
 			mockMvc.perform(options("/api/v1/auth/login")
+						   .contextPath("/api")
 						   .header(HttpHeaders.ORIGIN, "http://localhost:5173")
 						   .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET")
 						   .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "X-Client-Type"))
@@ -152,7 +155,7 @@ class SecurityConfigTest {
 		@Test
 		@DisplayName("응답에 Set-Cookie 세션 헤더가 없다 (STATELESS)")
 		void session_stateless_noSessionCookie() throws Exception {
-			mockMvc.perform(post("/api/v1/auth/login"))
+			mockMvc.perform(post("/api/v1/auth/login").contextPath("/api"))
 				   .andExpect(result -> {
 					   String setCookie = result.getResponse().getHeader("Set-Cookie");
 					   assertThat(setCookie).as("STATELESS 설정이므로 JSESSIONID 쿠키가 없어야 한다").isNullOrEmpty();
