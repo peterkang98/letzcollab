@@ -43,9 +43,14 @@ public class SecurityConfig {
 			.cors(cors -> cors.configurationSource(corsConfigurationSource))
 			.csrf(AbstractHttpConfigurer::disable)
 			.formLogin(AbstractHttpConfigurer::disable)
-			.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)) // 브라우저가 <iframe>에 페이지를 로드할 수 있는지를 결정하는 헤더 (h2 콘솔 접속용)
 			.authorizeHttpRequests(auth -> {
-				auth.requestMatchers("api/v1/auth/**", "/h2-console/**").permitAll();
+				auth.requestMatchers(
+						"api/v1/auth/**",
+						"/swagger-ui/**",
+						"/v3/api-docs/**",
+						"/swagger-resources/**",
+						"/swagger-ui.html"
+				).permitAll();
 				auth.anyRequest().authenticated();
 			})
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
