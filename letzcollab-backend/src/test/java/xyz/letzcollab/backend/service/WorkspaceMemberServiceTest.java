@@ -9,7 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.letzcollab.backend.TestAuditConfig;
 import xyz.letzcollab.backend.entity.User;
@@ -17,8 +18,7 @@ import xyz.letzcollab.backend.entity.Workspace;
 import xyz.letzcollab.backend.entity.WorkspaceInvitation;
 import xyz.letzcollab.backend.entity.WorkspaceMember;
 import xyz.letzcollab.backend.entity.vo.WorkspaceRole;
-import xyz.letzcollab.backend.global.email.EmailService;
-import xyz.letzcollab.backend.global.email.context.WorkspaceInvitationEmailContext;
+import xyz.letzcollab.backend.global.event.dto.EmailEvent;
 import xyz.letzcollab.backend.global.exception.CustomException;
 import xyz.letzcollab.backend.repository.UserRepository;
 import xyz.letzcollab.backend.repository.WorkspaceInvitationRepository;
@@ -30,10 +30,6 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static xyz.letzcollab.backend.global.exception.ErrorCode.*;
 
 
@@ -41,6 +37,7 @@ import static xyz.letzcollab.backend.global.exception.ErrorCode.*;
 @Transactional
 @ActiveProfiles("test")
 @Import(TestAuditConfig.class)
+@RecordApplicationEvents
 @DisplayName("WorkspaceMemberService 통합 테스트")
 class WorkspaceMemberServiceTest {
 
@@ -60,9 +57,9 @@ class WorkspaceMemberServiceTest {
 	@Autowired
 	WorkspaceInvitationRepository invitationRepository;
 
-	// 이메일 실제 발송 방지
-	@MockitoBean
-	EmailService emailService;
+	@Autowired
+	private ApplicationEvents events;
+
 
 	private User owner;
 	private User adminUser;
@@ -96,7 +93,7 @@ class WorkspaceMemberServiceTest {
 	class InviteMemberByEmail {
 
 		@Test
-		@DisplayName("OWNER가 초대하면 WorkspaceInvitation이 저장되고 이메일이 발송된다")
+		@DisplayName("OWNER가 초대하면 WorkspaceInvitation이 저장되고 이메일 발송 이벤트가 발행된다")
 		void ownerCanInvite() {
 			memberService.inviteMemberByEmail(
 					owner.getPublicId(), workspace.getPublicId(), "new@test.com", "디자이너");
@@ -104,9 +101,7 @@ class WorkspaceMemberServiceTest {
 			assertThat(invitationRepository.findAll())
 					.anyMatch(inv -> inv.getInviteeEmail().equals("new@test.com"));
 
-			verify(emailService, times(1)).sendTemplateEmail(
-					eq("new@test.com"), any(WorkspaceInvitationEmailContext.class)
-			);
+			verifyEmailEvent(1, "new@test.com");
 		}
 
 		@Test
@@ -116,9 +111,7 @@ class WorkspaceMemberServiceTest {
 
 			assertThat(invitationRepository.findAll()).hasSize(1);
 
-			verify(emailService, times(1)).sendTemplateEmail(
-					eq("new@test.com"), any(WorkspaceInvitationEmailContext.class)
-			);
+			verifyEmailEvent(1, "new@test.com");
 		}
 
 		@Test
@@ -461,5 +454,13 @@ class WorkspaceMemberServiceTest {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private void verifyEmailEvent(int timesSent, String email) {
+		long count = events.stream(EmailEvent.class)
+						   .filter(e -> e.email().equals(email))
+						   .count();
+
+		assertThat(count).isEqualTo(timesSent);
 	}
 }

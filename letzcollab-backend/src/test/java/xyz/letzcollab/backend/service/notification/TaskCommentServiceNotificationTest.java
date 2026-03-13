@@ -53,12 +53,17 @@ class TaskCommentServiceNotificationTest {
 	@Autowired
 	WorkspaceService workspaceService;
 
-	@Autowired UserRepository userRepository;
-	@Autowired WorkspaceRepository workspaceRepository;
-	@Autowired WorkspaceMemberRepository workspaceMemberRepository;
-	@Autowired TaskCommentRepository taskCommentRepository;
+	@Autowired
+	UserRepository userRepository;
+	@Autowired
+	WorkspaceRepository workspaceRepository;
+	@Autowired
+	WorkspaceMemberRepository workspaceMemberRepository;
+	@Autowired
+	TaskCommentRepository taskCommentRepository;
 
-	@Autowired ApplicationEvents events;
+	@Autowired
+	ApplicationEvents events;
 
 	private User reporter;
 	private User assignee;
