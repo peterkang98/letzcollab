@@ -3,6 +3,7 @@ package xyz.letzcollab.backend.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.letzcollab.backend.entity.User;
@@ -10,8 +11,8 @@ import xyz.letzcollab.backend.entity.Workspace;
 import xyz.letzcollab.backend.entity.WorkspaceInvitation;
 import xyz.letzcollab.backend.entity.WorkspaceMember;
 import xyz.letzcollab.backend.entity.vo.WorkspaceRole;
-import xyz.letzcollab.backend.global.email.EmailService;
 import xyz.letzcollab.backend.global.email.context.WorkspaceInvitationEmailContext;
+import xyz.letzcollab.backend.global.event.dto.EmailEvent;
 import xyz.letzcollab.backend.global.exception.CustomException;
 import xyz.letzcollab.backend.global.exception.ErrorCode;
 import xyz.letzcollab.backend.repository.UserRepository;
@@ -35,10 +36,10 @@ import static xyz.letzcollab.backend.global.exception.ErrorCode.*;
 @RequiredArgsConstructor
 @Slf4j
 public class WorkspaceMemberService {
+	private final ApplicationEventPublisher eventPublisher;
 
 	private final WorkspaceMemberRepository memberRepository;
 	private final WorkspaceInvitationRepository invitationRepository;
-	private final EmailService emailService;
 	private final UserRepository userRepository;
 
 	@Value("${frontend.base-url}")
@@ -62,7 +63,8 @@ public class WorkspaceMemberService {
 				invitation.getToken().toString(),
 				frontendURL
 		);
-		emailService.sendTemplateEmail(inviteeEmail, context);
+
+		eventPublisher.publishEvent(new EmailEvent(inviteeEmail, context));
 		log.info("워크스페이스 초대 이메일 전송 - workspaceId={}, inviterUserId={}, inviteeEmail={}",
 				workspacePublicId, userPublicId, inviteeEmail);
 	}

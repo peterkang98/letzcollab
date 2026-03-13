@@ -49,11 +49,15 @@ class ProjectMemberServiceNotificationTest {
 	@Autowired
 	WorkspaceService workspaceService;
 
-	@Autowired UserRepository userRepository;
-	@Autowired WorkspaceRepository workspaceRepository;
-	@Autowired WorkspaceMemberRepository workspaceMemberRepository;
+	@Autowired
+	UserRepository userRepository;
+	@Autowired
+	WorkspaceRepository workspaceRepository;
+	@Autowired
+	WorkspaceMemberRepository workspaceMemberRepository;
 
-	@Autowired ApplicationEvents events;
+	@Autowired
+	ApplicationEvents events;
 
 	private User wsOwner;
 	private User targetUser;

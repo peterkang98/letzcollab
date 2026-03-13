@@ -3,6 +3,7 @@ package xyz.letzcollab.backend.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,9 +13,9 @@ import xyz.letzcollab.backend.dto.auth.LoginResponse;
 import xyz.letzcollab.backend.dto.auth.SignupRequest;
 import xyz.letzcollab.backend.entity.User;
 import xyz.letzcollab.backend.entity.VerificationToken;
-import xyz.letzcollab.backend.global.email.EmailService;
 import xyz.letzcollab.backend.global.email.context.PasswordResetEmailContext;
 import xyz.letzcollab.backend.global.email.context.VerifyEmailContext;
+import xyz.letzcollab.backend.global.event.dto.EmailEvent;
 import xyz.letzcollab.backend.global.exception.CustomException;
 import xyz.letzcollab.backend.global.exception.ErrorCode;
 import xyz.letzcollab.backend.global.security.jwt.JwtTokenProvider;
@@ -29,10 +30,11 @@ import java.util.UUID;
 @Transactional
 @Slf4j
 public class AuthService {
+	private final ApplicationEventPublisher eventPublisher;
+
 	private final UserRepository userRepository;
 	private final VerificationTokenRepository tokenRepository;
 	private final PasswordEncoder passwordEncoder;
-	private final EmailService emailService;
 	private final AuthenticationManager authenticationManager;
 	private final JwtTokenProvider jwtTokenProvider;
 
@@ -142,7 +144,7 @@ public class AuthService {
 				foundUser.getName(), passwordResetToken.getToken().toString(), frontendURL
 		);
 
-		emailService.sendTemplateEmail(email, emailContext);
+		eventPublisher.publishEvent(new EmailEvent(email, emailContext));
 		log.info("비밀번호 재설정 메일 발송 완료 - email: {}", email);
 	}
 
@@ -176,6 +178,6 @@ public class AuthService {
 
 	private void sendVerificationEmail(String name, String token, String email) {
 		VerifyEmailContext emailContext = new VerifyEmailContext(name, token, frontendURL);
-		emailService.sendTemplateEmail(email, emailContext);
+		eventPublisher.publishEvent(new EmailEvent(email, emailContext));
 	}
 }

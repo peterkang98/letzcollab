@@ -10,7 +10,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.letzcollab.backend.dto.auth.LoginResponse;
 import xyz.letzcollab.backend.dto.auth.SignupRequest;
@@ -19,9 +20,7 @@ import xyz.letzcollab.backend.entity.VerificationToken;
 import xyz.letzcollab.backend.entity.vo.TokenType;
 import xyz.letzcollab.backend.entity.vo.UserRole;
 import xyz.letzcollab.backend.entity.vo.UserStatus;
-import xyz.letzcollab.backend.global.email.EmailService;
-import xyz.letzcollab.backend.global.email.context.PasswordResetEmailContext;
-import xyz.letzcollab.backend.global.email.context.VerifyEmailContext;
+import xyz.letzcollab.backend.global.event.dto.EmailEvent;
 import xyz.letzcollab.backend.global.exception.CustomException;
 import xyz.letzcollab.backend.global.exception.ErrorCode;
 import xyz.letzcollab.backend.repository.UserRepository;
@@ -34,14 +33,12 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
 @DisplayName("AuthService 통합 테스트")
+@RecordApplicationEvents
 class AuthServiceTest {
 
 	@Autowired
@@ -56,9 +53,8 @@ class AuthServiceTest {
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
-	@MockitoBean
-	private EmailService emailService;
-
+	@Autowired
+	private ApplicationEvents events;
 
 	private SignupRequest createSignupRequest(String email) {
 		return new SignupRequest("홍길동", email, "Password1!", "010-1234-5678");
@@ -82,7 +78,7 @@ class AuthServiceTest {
 	class Signup {
 
 		@Test
-		@DisplayName("정상 회원가입 시 PENDING 상태 유저와 이메일 인증 토큰이 생성되고 이메일이 발송된다")
+		@DisplayName("정상 회원가입 시 PENDING 상태 유저와 이메일 인증 토큰이 생성되고 이메일 발송 이벤트가 발행된다")
 		void signup_success() {
 			// given
 			SignupRequest request = createSignupRequest("new@example.com");
@@ -104,7 +100,7 @@ class AuthServiceTest {
 			assertThat(tokens.getFirst().getType()).isEqualTo(TokenType.VERIFY_EMAIL);
 			assertThat(tokens.getFirst().getUsedAt()).isNull();
 
-			verify(emailService, times(1)).sendTemplateEmail(eq("new@example.com"), any(VerifyEmailContext.class));
+			verifyEmailEvent(1, "new@example.com");
 		}
 
 		@Test
@@ -119,7 +115,7 @@ class AuthServiceTest {
 					.isInstanceOf(CustomException.class)
 					.satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.DUPLICATE_EMAIL));
 
-			verify(emailService, never()).sendTemplateEmail(anyString(), any(VerifyEmailContext.class));
+			verifyEmailEvent(0, "dup@example.com");
 		}
 
 		@Test
@@ -278,7 +274,7 @@ class AuthServiceTest {
 	class ResendVerificationEmail {
 
 		@Test
-		@DisplayName("만료된 토큰으로 재전송 요청 시 기존 토큰 삭제 후 새 토큰 발급 및 이메일 발송")
+		@DisplayName("만료된 토큰으로 재전송 요청 시 기존 토큰 삭제 후 새 토큰 발급 및 이메일 발송 이벤트 발행")
 		void resend_success() throws Exception {
 			// given
 			authService.signup(createSignupRequest("resend@example.com"));
@@ -299,7 +295,7 @@ class AuthServiceTest {
 			assertThat(tokenRepository.findByToken(oldTokenValue)).isEmpty();
 
 			// 이메일 발송: signup(1회) + resend(1회) = 2회
-			verify(emailService, times(2)).sendTemplateEmail(eq("resend@example.com"), any(VerifyEmailContext.class));
+			verifyEmailEvent(2, "resend@example.com");
 		}
 
 		@Test
@@ -337,7 +333,7 @@ class AuthServiceTest {
 	class RequestResetPassword {
 
 		@Test
-		@DisplayName("ACTIVE 상태의 사용자가 비밀번호 재설정 요청 시 토큰이 생성되고 이메일이 발송된다")
+		@DisplayName("ACTIVE 상태의 사용자가 비밀번호 재설정 요청 시 토큰이 생성되고 이메일 발송 이벤트가 발행된다")
 		void requestReset_activeUser_success() {
 			// given
 			saveActiveUser("reset@example.com");
@@ -346,7 +342,7 @@ class AuthServiceTest {
 			authService.requestResetPassword("reset@example.com");
 
 			// then
-			verify(emailService, times(1)).sendTemplateEmail(eq("reset@example.com"), any(PasswordResetEmailContext.class));
+			verifyEmailEvent(1, "reset@example.com");
 		}
 
 		@Test
@@ -354,13 +350,13 @@ class AuthServiceTest {
 		void requestReset_pendingUser_success() {
 			// given
 			authService.signup(createSignupRequest("pendingReset@example.com"));
-			reset(emailService); // signup에서 발송된 이메일 카운트 초기화
 
 			// when
 			authService.requestResetPassword("pendingReset@example.com");
 
 			// then
-			verify(emailService, times(1)).sendTemplateEmail(eq("pendingReset@example.com"), any(PasswordResetEmailContext.class));
+			// signup(1회) + requestResetPassword (1회) = 2회
+			verifyEmailEvent(2, "pendingReset@example.com");
 		}
 
 		@Test
@@ -449,5 +445,14 @@ class AuthServiceTest {
 					.isInstanceOf(CustomException.class)
 					.satisfies(ex -> assertThat(((CustomException) ex).getErrorCode()).isEqualTo(ErrorCode.VERIFICATION_TOKEN_EXPIRED));
 		}
+	}
+
+	// 헬퍼
+	private void verifyEmailEvent(int timesSent, String email) {
+		long count = events.stream(EmailEvent.class)
+						   .filter(e -> e.email().equals(email))
+						   .count();
+
+		assertThat(count).isEqualTo(timesSent);
 	}
 }
