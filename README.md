@@ -26,6 +26,8 @@
 
 ### 3.1. 아키텍처 다이어그램
 
+<img width="4252" height="942" alt="Image" src="https://github.com/user-attachments/assets/7c158978-55ff-486f-a080-d5a597070e1a" />
+
 ### 3.2. 논리적 데이터 아키텍처 및 권한 모델
 
 Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 강화했습니다.
