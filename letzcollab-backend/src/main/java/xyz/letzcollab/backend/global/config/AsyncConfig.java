@@ -32,7 +32,7 @@ public class AsyncConfig {
 	public Executor emailExecutor() {
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 
-		// 네트워크 I/O 위주로 대기 시간이 길므로 스레드를 더 많이 할당
+		// 네트워크 I/O 위주로 대기 시간이 길어서 스레드를 더 많이 할당
 		executor.setCorePoolSize(5);
 		executor.setMaxPoolSize(20);
 		executor.setQueueCapacity(100);
