@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -17,10 +18,15 @@ import java.net.URI;
 
 @Tag(name = "01. Auth", description = "회원가입, 로그인 및 이메일 인증 API")
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/v1/auth")
 public class AuthController {
 	private final AuthService authService;
+	private final boolean cookieSecure;
+
+	public AuthController(AuthService authService, @Value("${cookie.secure}") boolean cookieSecure) {
+		this.authService = authService;
+		this.cookieSecure = cookieSecure;
+	}
 
 	@Operation(summary = "회원가입", description = "새로운 사용자를 등록합니다. 30분 이내에 이메일 인증을 완료해야 로그인이 가능합니다.")
 	@PostMapping("/signup")
@@ -46,7 +52,7 @@ public class AuthController {
 		if ("web".equalsIgnoreCase(clientType)) {
 			ResponseCookie cookie = ResponseCookie.from("accessToken", loginResponse.accessToken())
 												  .httpOnly(true)	// XSS 방지(JS에서 접근 불가)
-												  .secure(false)    // 로컬 테스트(http)용, 배포할 때 수정
+												  .secure(cookieSecure)
 												  .path("/")
 												  .maxAge(60 * 30)
 												  .sameSite("Lax")	// CSRF 방지
@@ -72,7 +78,7 @@ public class AuthController {
 
 		ResponseCookie cookie = ResponseCookie.from("accessToken", "")
 											  .httpOnly(true)
-											  .secure(false)	// 로컬 테스트(http)용, 배포할 때 수정
+											  .secure(cookieSecure)
 											  .path("/")
 											  .maxAge(0)
 											  .sameSite("Lax")

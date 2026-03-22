@@ -16,3 +16,6 @@ spring:
 
 frontend:
   base-url: https://letzcollab.xyz
+
+cookie:
+  secure: true

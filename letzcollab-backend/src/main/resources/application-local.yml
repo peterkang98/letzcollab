@@ -17,3 +17,6 @@ spring:
     properties:
       mail:
         debug: true
+
+cookie:
+  secure: true
