@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import xyz.letzcollab.backend.dto.task.MyTaskSearchCond;
 import xyz.letzcollab.backend.dto.task.TaskSearchCond;
 import xyz.letzcollab.backend.entity.QUser;
 import xyz.letzcollab.backend.entity.Task;
@@ -19,7 +20,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static xyz.letzcollab.backend.entity.QProject.project;
 import static xyz.letzcollab.backend.entity.QTask.task;
+import static xyz.letzcollab.backend.entity.QWorkspace.workspace;
 
 @RequiredArgsConstructor
 public class TaskRepositoryCustomImpl implements TaskRepositoryCustom {
@@ -76,6 +79,41 @@ public class TaskRepositoryCustomImpl implements TaskRepositoryCustom {
 					 .where(task.publicId.eq(taskPublicId))
 					 .fetchOne()
 		);
+	}
+
+	@Override
+	public Page<Task> findMyTasks(UUID assigneePublicId, MyTaskSearchCond cond, Pageable pageable) {
+
+		List<Task> tasks = query.selectFrom(task)
+								.join(task.project, project).fetchJoin()
+								.join(project.workspace, workspace)
+								.where(
+										task.assignee.publicId.eq(assigneePublicId),
+										workspace.publicId.eq(cond.workspacePublicId()),
+										statusEq(cond.status()),
+										priorityEq(cond.priority()),
+										dueDateGoe(cond.dueDateFrom()),
+										dueDateLoe(cond.dueDateTo())
+								)
+								.offset(pageable.getOffset())
+								.limit(pageable.getPageSize())
+								.orderBy(getDefaultOrder())
+								.fetch();
+
+		Long total = query.select(task.count())
+						  .from(task)
+						  .join(task.project, project)
+						  .join(project.workspace, workspace)
+						  .where(
+								  task.assignee.publicId.eq(assigneePublicId),
+								  workspace.publicId.eq(cond.workspacePublicId()),
+								  statusEq(cond.status()),
+								  priorityEq(cond.priority()),
+								  dueDateGoe(cond.dueDateFrom()),
+								  dueDateLoe(cond.dueDateTo())
+						  ).fetchOne();
+
+		return new PageImpl<>(tasks, pageable, total == null ? 0L : total);
 	}
 
 	private BooleanExpression statusEq(TaskStatus status) {
