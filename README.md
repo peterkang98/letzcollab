@@ -5,6 +5,14 @@
 
 > 워크스페이스 단위로 조직을 관리하고, 프로젝트와 업무를 체계적으로 추적하는 협업 솔루션
 
+
+---
+## 스크린샷
+
+<img width="1930" height="1608" alt="Image" src="https://github.com/user-attachments/assets/cbc568da-0dee-4e70-ac61-41a28f937fe4" />
+
+<img width="2146" height="3248" alt="Image" src="https://github.com/user-attachments/assets/cccff5cd-77f3-4734-8c47-641bf1fa8599" />
+
 ---
 
 ## 1. 프로젝트 개요
@@ -17,8 +25,6 @@
 
 - **서비스 URL**: https://letzcollab.xyz/
 - **API 명세서 (Swagger)**: https://letzcollab.xyz/api/swagger-ui/index.html
-
-<img width="876" height="1148" alt="Image" src="https://github.com/user-attachments/assets/0fa0ce6d-b905-42a9-964e-d96b7bb5d084" />
 
 > 별도 회원가입 없이 로그인 페이지의 테스트 계정으로 바로 체험할 수 있습니다.
 
