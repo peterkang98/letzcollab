@@ -30,7 +30,7 @@ public class MyController {
 	@GetMapping("/tasks")
 	public ResponseEntity<ApiResponse<Page<MyTaskResponse>>> getMyTasks(
 			@AuthenticationPrincipal CustomUserDetails userDetails,
-			@RequestBody @Valid MyTaskSearchCond cond,
+			@ModelAttribute @Valid MyTaskSearchCond cond,
 			Pageable pageable
 	) {
 		Page<MyTaskResponse> response = myService.getMyTasks(userDetails.getPublicId(), cond, pageable);
