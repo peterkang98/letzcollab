@@ -43,6 +43,7 @@ public class SecurityConfig {
 			.csrf(AbstractHttpConfigurer::disable)
 			.formLogin(AbstractHttpConfigurer::disable)
 			.authorizeHttpRequests(auth -> {
+				auth.requestMatchers("/v1/auth/logout").authenticated();
 				auth.requestMatchers(
 						"/v1/auth/**",
 						"/swagger-ui/**",
