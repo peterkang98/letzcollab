@@ -6,4 +6,17 @@ const api = axios.create({
   withCredentials: true
 })
 
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    const errorCode = err.response?.data?.errorCode;
+    if (errorCode === 'A003' || errorCode === 'A001') {
+        localStorage.removeItem('user');
+        window.location.replace('/auth/login');
+    }
+
+    return Promise.reject(err);
+  }
+)
+
 export default api;
