@@ -18,6 +18,10 @@
 - **서비스 URL**: https://letzcollab.xyz/
 - **API 명세서 (Swagger)**: https://letzcollab.xyz/api/swagger-ui/index.html
 
+<img width="876" height="1148" alt="Image" src="https://github.com/user-attachments/assets/0fa0ce6d-b905-42a9-964e-d96b7bb5d084" />
+
+> 별도 회원가입 없이 로그인 페이지의 테스트 계정으로 바로 체험할 수 있습니다.
+
 ---
 
 ## 2. 기술 스택
@@ -492,15 +496,22 @@ letzcollab/
 │   ├── public/                          
 │   └── src/
 │       ├── api/
-│       │   └── axios.js                 # Axios 인스턴스 (baseURL, credentials 설정)
-│       ├── components/                  # 재사용 UI 컴포넌트
-│       │   ├── AuthFormInput.jsx        # 공통 인증 폼 인풋
-│       │   └── Logo.jsx
-│       ├── layouts/                     # 페이지 레이아웃 래퍼
+│       │   └── axios.js                 # Axios 인스턴스 (baseURL, credentials, JWT 만료 인터셉터)
+│       ├── components/                  
+│       │   ├── AuthFormInput.jsx
+│       │   ├── Logo.jsx
+│       │   ├── ProjectCard.jsx          # 프로젝트 카드 (상태, 리더, 기간, 공개여부 표시)
+│       │   ├── TaskCard.jsx             # 업무 카드 (우선순위, 상태, 마감일 표시)
+│       │   └── WorkspaceSelect.jsx      # 워크스페이스 선택 셀렉트박스
+│       ├── constants/
+│       │   ├── projectStatus.js         # ProjectStatus enum 라벨/색상 매핑
+│       │   └── taskStatus.js            # TaskStatus, TaskPriority enum 라벨/색상 매핑
+│       ├── layouts/                     
 │       │   ├── AuthLayout.jsx           # 인증 관련 페이지 레이아웃
-│       │   └── MainLayout.jsx           # 로그인 후 메인 페이지 레이아웃
-│       ├── pages/                       # 라우트 단위 페이지 컴포넌트
-│       │   ├── Login.jsx
+│       │   └── MainLayout.jsx           # 로그인 후 메인 페이지 레이아웃 (헤더, 로그아웃)
+│       ├── pages/                       
+│       │   ├── Dashboard.jsx            # 메인 대시보드 (워크스페이스 선택, 프로젝트/업무 목록)
+│       │   ├── Login.jsx                
 │       │   ├── Signup.jsx
 │       │   ├── VerifyEmail.jsx
 │       │   ├── RequestPasswordReset.jsx
@@ -508,8 +519,10 @@ letzcollab/
 │       ├── routes/
 │       │   ├── PrivateRoute.jsx         # 인증 필요 라우트 가드
 │       │   └── PublicRoute.jsx          # 비인증 전용 라우트 가드
+│       ├── utils/
+│       │   └── dateUtils.js             # 마감일 D-day 계산 유틸
 │       ├── App.css
-│       ├── App.jsx                      # 라우터 및 QueryClient 설정
+│       ├── App.jsx
 │       ├── index.css
 │       └── main.jsx
 │
