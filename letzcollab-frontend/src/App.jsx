@@ -10,6 +10,7 @@ import Signup from "./pages/Signup.jsx";
 import VerifyEmail from "./pages/VerifyEmail.jsx";
 import RequestPasswordReset from "./pages/RequestPasswordReset.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
 
 const queryClient = new QueryClient();
 
@@ -22,7 +23,7 @@ function App() {
             {/* 인증이 필요한 페이지들의 레이아웃과 라우팅 설정 */}
             <Route element={<PrivateRoute/>}>
               <Route element={<MainLayout/>}>
-                <Route path="/" element={<></>}/>
+                <Route path="/" element={<Dashboard/>}/>
               </Route>
             </Route>
 
