@@ -449,7 +449,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 기존에는 이메일 발송을 서비스 레이어에서 동기적으로 직접 처리하여, SMTP 응답 지연이 API 응답 속도에 직접적인 영향을 미쳤습니다.
 
-<img width="2234" height="1268" alt="Image" src="https://github.com/user-attachments/assets/b09f1516-6688-443d-82fb-f3f863632740" />
+<img width="2226" height="1260" alt="Image" src="https://github.com/user-attachments/assets/e4f6237f-a753-427a-885c-1092a1875de0" />
 
 #### 개선 과정
 
@@ -465,7 +465,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 #### 성능 개선 결과 (NCP vCPU 2코어, 10회 측정 기준)
 
-<img width="2226" height="1260" alt="Image" src="https://github.com/user-attachments/assets/e4f6237f-a753-427a-885c-1092a1875de0" />
+<img width="2234" height="1268" alt="Image" src="https://github.com/user-attachments/assets/b09f1516-6688-443d-82fb-f3f863632740" />
 
 | 측정 회차     | 동기 방식 (기존)   | 비동기 방식 (개선 후) |
 |:----------|:-------------|:--------------|
