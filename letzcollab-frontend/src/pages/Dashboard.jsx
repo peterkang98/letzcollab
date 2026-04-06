@@ -8,6 +8,7 @@ import ProjectCard from '../components/ProjectCard.jsx';
 import TaskCard from '../components/TaskCard.jsx';
 
 const { Title, Text } = Typography;
+const POLLING_INTERVAL = 1000 * 60;
 
 export default function Dashboard() {
   const user = JSON.parse(localStorage.getItem('user'));
@@ -20,6 +21,8 @@ export default function Dashboard() {
       return res.data.data.content;
     },
     enabled: !!workspaceId,
+    refetchInterval: POLLING_INTERVAL,
+    refetchIntervalInBackground: false
   });
 
   const { data: myTasks, isLoading: tasksLoading } = useQuery({
@@ -29,6 +32,8 @@ export default function Dashboard() {
       return res.data.data.content;
     },
     enabled: !!workspaceId,
+    refetchInterval: POLLING_INTERVAL,
+    refetchIntervalInBackground: false
   });
 
   return (
