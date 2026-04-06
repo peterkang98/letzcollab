@@ -12,7 +12,16 @@ import RequestPasswordReset from "./pages/RequestPasswordReset.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 30,        // 30초로 낮춤: 협업툴 특성상 타인이 데이터를 바꿀 수 있음
+      gcTime: 1000 * 60 * 10,      // 언마운트 후 10분 뒤 메모리에서 제거
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 function App() {
   return (
