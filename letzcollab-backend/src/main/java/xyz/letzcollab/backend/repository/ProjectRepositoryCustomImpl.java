@@ -39,6 +39,7 @@ public class ProjectRepositoryCustomImpl implements ProjectRepositoryCustom {
 									  .join(project.workspace, workspace)
 									  .leftJoin(project.leader, user).fetchJoin()    // 혹시 leader가 null이 들어간 경우에도 프로젝트는 조회 가능하도록
 									  .where(
+										  workspace.publicId.eq(workspacePublicId),
 										  nameContains(cond.keyword()),
 										  statusEq(cond.status()),
 										  isAccessible(userPublicId)
