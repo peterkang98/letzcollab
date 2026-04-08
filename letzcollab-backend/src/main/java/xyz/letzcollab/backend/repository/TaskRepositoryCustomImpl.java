@@ -3,6 +3,8 @@ package xyz.letzcollab.backend.repository;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -143,8 +145,15 @@ public class TaskRepositoryCustomImpl implements TaskRepositoryCustom {
 	 * 3. 생성일 내림차순 (최신 먼저)
 	 */
 	private OrderSpecifier<?>[] getDefaultOrder() {
+		NumberExpression<Integer> priorityOrder = new CaseBuilder()
+				.when(task.priority.eq(TaskPriority.URGENT)).then(3)
+				.when(task.priority.eq(TaskPriority.HIGH)).then(2)
+				.when(task.priority.eq(TaskPriority.MEDIUM)).then(1)
+				.when(task.priority.eq(TaskPriority.LOW)).then(0)
+				.otherwise(0);
+
 		return new OrderSpecifier[]{
-				new OrderSpecifier<>(Order.DESC, task.priority),
+				new OrderSpecifier<>(Order.DESC, priorityOrder),
 				new OrderSpecifier<>(Order.ASC, task.dueDate),
 				new OrderSpecifier<>(Order.DESC, task.createdAt)
 		};
