@@ -54,7 +54,7 @@ services:
     container_name: letzcollab-mail
     restart: always
     environment:
-      - ALLOWED_SENDER_DOMAINS=letzcollab.xyz
+      - ALLOWED_SENDER_DOMAINS=mail.letzcollab.xyz
       - POSTFIX_mynetworks=127.0.0.0/8 172.18.0.0/16
       - POSTFIX_smtp_tls_security_level=may
       - POSTFIX_smtp_tls_loglevel=1
