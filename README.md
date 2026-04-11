@@ -124,7 +124,7 @@ npm run dev
 
 ### 3.1. 아키텍처 다이어그램
 
-<img width="1600" height="1872" alt="Image" src="https://github.com/user-attachments/assets/39a4a73d-3116-472b-9931-f3050835a050" />
+<img width="1594" height="1866" alt="Image" src="https://github.com/user-attachments/assets/85281081-1adf-412f-8ba6-fd80178ac5c5" />
 
 - NGINX를 리버스 프록시로 설정하여, 리액트 정적 파일 서빙과 `/api/*` 백엔드 라우팅을 분리
 - Let's Encrypt + Certbot으로 SSL 인증서를 발급하여 NGINX 서버에 HTTPS를 적용
