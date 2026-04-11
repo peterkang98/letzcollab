@@ -32,15 +32,15 @@
 
 ## 2. 기술 스택
 
-| 구분       | 기술                                  |
-|----------|-------------------------------------|
-| Backend  | Java 21, Spring Boot 3.5            |
-| Frontend | React 19.2, Vite 7.3                |
-| Database | PostgreSQL                          |
-| Mail     | AWS SES                             |
-| Infra    | Naver Cloud Platform, Docker, NGINX |
-| SSL      | Let's Encrypt / Certbot             |
-| CI/CD    | GitHub Actions                      |
+| 구분       | 기술                                         |
+|----------|--------------------------------------------|
+| Backend  | Java 21, Spring Boot 3.5                   |
+| Frontend | React 19.2, Vite 7.3                       |
+| Database | PostgreSQL                                 |
+| Email    | Postfix (운영 환경), MailHog (테스트용 가짜 SMTP 서버) |
+| Infra    | Naver Cloud Platform, Docker, NGINX        |
+| SSL      | Let's Encrypt / Certbot                    |
+| CI/CD    | GitHub Actions                             |
 
 ### 2.1 백엔드 라이브러리
 
@@ -79,18 +79,12 @@
 - Java 21+
 - Node.js 20+
 - Docker
-- SMTP 서버 (AWS SES 권장)
-    - 다른걸 쓰면 `application.yml`에서 `host` 부분을 해당 SMTP 서버 주소로 바꿔야합니다.
 
 #### 1. 환경 변수 설정
 
 `letzcollab-backend/.env` 파일을 생성하고 아래 값을 채워주세요.
 
 ```env
-# AWS SES SMTP 계정
-EMAIL_USERNAME=
-EMAIL_PASSWORD=
-
 # JWT 설정 
 JWT_ENC_KEY= (Base64 인코딩된 시크릿 키, 길이는 256비트 이상)
 JWT_ACCESS_EXP_TIME= (ms로 유효기간 설정)
@@ -105,7 +99,7 @@ DB_NAME=
 
 ```bash
 cd letzcollab-backend
-docker-compose up -d            # PostgreSQL 컨테이너 실행
+docker-compose up -d            # PostgreSQL, MailHog 컨테이너 실행
 
 export $(cat .env | xargs)      # .env 환경변수 현재 셸에 주입
 ./gradlew bootRun --args='--spring.profiles.active=local'
@@ -122,6 +116,7 @@ npm run dev
 ```
 
 프론트엔드는 `http://localhost:5173`, 백엔드 API는 `http://localhost:8080`에서 실행됩니다.
+<br> 앱 내에서 전송한 이메일은 `http://localhost:8025`에서 확인 가능합니다.
 
 ---
 
@@ -129,10 +124,13 @@ npm run dev
 
 ### 3.1. 아키텍처 다이어그램
 
-<img width="4252" height="942" alt="Image" src="https://github.com/user-attachments/assets/7c158978-55ff-486f-a080-d5a597070e1a" />
+<img width="1600" height="1872" alt="Image" src="https://github.com/user-attachments/assets/39a4a73d-3116-472b-9931-f3050835a050" />
 
-NGINX를 리버스 프록시로 설정하여, 리액트 정적 파일 서빙과 `/api/*` 백엔드 라우팅을 분리했습니다.
-<br> Let's Encrypt + Certbot으로 SSL 인증서를 발급하여 NGINX 서버에 HTTPS를 적용했습니다.
+- NGINX를 리버스 프록시로 설정하여, 리액트 정적 파일 서빙과 `/api/*` 백엔드 라우팅을 분리
+- Let's Encrypt + Certbot으로 SSL 인증서를 발급하여 NGINX 서버에 HTTPS를 적용
+- Postfix(SMTP 서버)를 사용해서 자체 이메일 발송 인프라를 구축
+  - Certbot으로 발급받은 SSL 인증서를 Postfix 컨테이너에 마운트
+  - DNS 설정 (SPF, DMARC) 완료
 
 ### 3.2. 논리적 데이터 아키텍처 및 권한 모델
 
@@ -279,9 +277,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 ---
 
-#### F. AWS SES 기반 비동기 이메일 서비스
-
-> ⚠️ 현재 AWS SES가 샌드박스 모드로 운영 중이므로, 이메일은 사전에 등록된 주소로만 수신 가능합니다.
+#### F. 비동기 이메일 서비스
 
 - `EmailContext` 인터페이스(`getTemplateName()`, `getSubject()`, `getVariables()`)를 전략 패턴으로 설계
     - `VerifyEmailContext`, `PasswordResetEmailContext` 등: 각 이메일 유형을 record로 작성하고 인터페이스를 `EmailContext` 구현
