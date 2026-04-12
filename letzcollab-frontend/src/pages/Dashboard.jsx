@@ -4,9 +4,9 @@ import { ProjectOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from "react-router-dom";
 import api from '../api/axios.js';
-import WorkspaceSelect from '../components/WorkspaceSelect.jsx';
-import ProjectCard from '../components/ProjectCard.jsx';
-import TaskCard from '../components/TaskCard.jsx';
+import WorkspaceSelect from '../components/dashboard/WorkspaceSelect.jsx';
+import ProjectCard from '../components/dashboard/ProjectCard.jsx';
+import TaskCard from '../components/dashboard/TaskCard.jsx';
 
 const { Title, Text } = Typography;
 const POLLING_INTERVAL = 1000 * 60;

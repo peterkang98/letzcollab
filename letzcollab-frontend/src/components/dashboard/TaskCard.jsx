@@ -1,7 +1,7 @@
 import { Card, Flex, Space, Tag, Typography } from 'antd';
 import { FolderOutlined } from '@ant-design/icons';
-import { PRIORITY_CONFIG, STATUS_CONFIG } from '../constants/taskStatus.js';
-import { formatDueDate } from '../utils/dateUtils.js';
+import { PRIORITY_CONFIG, STATUS_CONFIG } from '../../constants/taskStatus.js';
+import { formatDueDate } from '../../utils/dateUtils.js';
 
 const { Text } = Typography;
 

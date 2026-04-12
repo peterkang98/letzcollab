@@ -4,8 +4,8 @@ import { BellOutlined, FolderOpenFilled, MenuOutlined } from '@ant-design/icons'
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import api from '../api/axios.js';
-import NotificationDrawer from "../components/NotificationDrawer.jsx";
-import SidebarContent from "../components/SidebarContent.jsx";
+import NotificationDrawer from "../components/sidebar/NotificationDrawer.jsx";
+import SidebarContent from "../components/sidebar/SidebarContent.jsx";
 
 const { Sider, Header, Content } = Layout;
 const { Text } = Typography;

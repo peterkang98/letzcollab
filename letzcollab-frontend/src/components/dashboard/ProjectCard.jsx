@@ -1,6 +1,6 @@
 import { Card, Flex, Space, Tag, Typography } from 'antd';
 import { CalendarOutlined, CrownOutlined, LockOutlined, TeamOutlined, UnlockOutlined } from '@ant-design/icons';
-import { PROJECT_STATUS_CONFIG } from '../constants/projectStatus.js';
+import { PROJECT_STATUS_CONFIG } from '../../constants/projectStatus.js';
 
 const { Text } = Typography;
 

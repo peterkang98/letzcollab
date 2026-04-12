@@ -1,6 +1,6 @@
 import { Select } from "antd";
 import { useQuery } from "@tanstack/react-query";
-import api from "../api/axios.js";
+import api from "../../api/axios.js";
 
 export default function WorkspaceSelect({ value, onChange }) {
   const { data, isLoading } = useQuery(

@@ -3,9 +3,9 @@ import { Badge, Button, Drawer, Empty, Flex, Pagination, Skeleton, Tag, Typograp
 import { BellOutlined, CheckOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import api from '../api/axios.js';
-import { NOTIFICATION_TYPE_CONFIG, buildNotifLink } from '../constants/notificationConfig.js';
-import { timeAgo } from '../utils/dateUtils.js';
+import api from '../../api/axios.js';
+import { NOTIFICATION_TYPE_CONFIG, buildNotifLink } from '../../constants/notificationConfig.js';
+import { timeAgo } from '../../utils/dateUtils.js';
 
 const { Text } = Typography;
 

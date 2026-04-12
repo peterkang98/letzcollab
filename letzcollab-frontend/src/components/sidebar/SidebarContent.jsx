@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Flex } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import api from '../api/axios.js';
+import api from '../../api/axios.js';
 import WorkspaceSwitcher from './WorkspaceSwitcher.jsx';
 import SidebarNav from './SidebarNav.jsx';
 import SidebarFooter from './SidebarFooter.jsx';
