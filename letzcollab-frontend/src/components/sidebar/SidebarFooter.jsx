@@ -4,7 +4,7 @@ import { BellOutlined, CaretUpOutlined, LogoutOutlined, UserOutlined } from '@an
 const { Text } = Typography;
 
 export default function SidebarFooter({ user, unreadCount, onNotifOpen, onLogout, onNavigate }) {
-  const dropdownItems = [
+  const items = [
     {
       key: 'header',
       label: (
@@ -18,14 +18,9 @@ export default function SidebarFooter({ user, unreadCount, onNotifOpen, onLogout
       disabled: true,
     },
     { type: 'divider' },
-    { key: '/me', icon: <UserOutlined />, label: '내 정보' },
-    { key: 'logout', icon: <LogoutOutlined />, label: '로그아웃', danger: true },
+    { key: '/me', icon: <UserOutlined />, label: '내 정보', onClick: () => onNavigate('/me') },
+    { key: 'logout', icon: <LogoutOutlined />, label: '로그아웃', danger: true, onClick: () => onLogout() },
   ];
-
-  const handleDropdownClick = ({ key }) => {
-    if (key === 'logout') onLogout();
-    else if (key === '/me') onNavigate('/me');
-  };
 
   return (
     <div style={{ padding: '0 16px 16px', flexShrink: 0 }}>
@@ -34,7 +29,7 @@ export default function SidebarFooter({ user, unreadCount, onNotifOpen, onLogout
 
           {/* 유저 Dropdown */}
           <Dropdown
-            menu={{ items: dropdownItems, onClick: handleDropdownClick }}
+            menu={{ items }}
             placement="topLeft"
             trigger={['click']}
           >
