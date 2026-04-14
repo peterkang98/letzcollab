@@ -11,6 +11,7 @@ import VerifyEmail from "./pages/VerifyEmail.jsx";
 import RequestPasswordReset from "./pages/RequestPasswordReset.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
+import TaskDetailPage from "./pages/TaskDetailPage.jsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,6 +34,7 @@ function App() {
             <Route element={<PrivateRoute/>}>
               <Route element={<MainLayout/>}>
                 <Route path="/" element={<Dashboard/>}/>
+                <Route path="/projects/:projectPublicId/tasks/:taskPublicId" element={<TaskDetailPage />} />
               </Route>
             </Route>
 
