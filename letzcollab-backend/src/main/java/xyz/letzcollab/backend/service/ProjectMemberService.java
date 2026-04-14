@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import xyz.letzcollab.backend.dto.project.AddMemberRequest;
+import xyz.letzcollab.backend.dto.project.MyProjectMemberResponse;
 import xyz.letzcollab.backend.dto.project.UpdateMyselfRequest;
 import xyz.letzcollab.backend.dto.project.UpdateOtherMemberRequest;
 import xyz.letzcollab.backend.entity.Project;
@@ -37,6 +38,15 @@ public class ProjectMemberService {
 
 	private final ProjectMemberRepository projectMemberRepository;
 	private final WorkspaceMemberRepository workspaceMemberRepository;
+
+	@Transactional(readOnly = true)
+	public MyProjectMemberResponse getMyMemberInfo(UUID userPublicId, UUID projectPublicId) {
+		ProjectMember me = projectMemberRepository
+				.findByUserPublicIdAndProjectPublicId(userPublicId, projectPublicId)
+				.orElseThrow(() -> new CustomException(PROJECT_NOT_FOUND_OR_ACCESS_DENIED));
+		return MyProjectMemberResponse.from(me);
+	}
+
 
 	/**
 	 * leader와 admin만 멤버 추가 가능
