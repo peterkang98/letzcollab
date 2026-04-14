@@ -58,7 +58,7 @@ public class Project extends PublicIdAndFullAuditBaseEntity {
 	private boolean isPrivate;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "member_id", nullable = false)
+	@JoinColumn(name = "lead_id", nullable = false)
 	private User leader;
 
 	@Column(name = "deleted_at")
