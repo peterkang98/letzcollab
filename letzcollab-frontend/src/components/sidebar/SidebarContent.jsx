@@ -1,34 +1,18 @@
-import { useState } from 'react';
-import { Flex } from 'antd';
+import { Flex, Typography } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios.js';
 import WorkspaceSwitcher from './WorkspaceSwitcher.jsx';
 import SidebarNav from './SidebarNav.jsx';
 import SidebarFooter from './SidebarFooter.jsx';
+import { useWorkspace } from "../../contexts/WorkspaceContext.jsx";
+import { FolderOpenFilled } from "@ant-design/icons";
 
-const LAST_WORKSPACE_KEY = 'lastWorkspaceId';
+const { Text } = Typography;
 
 export default function SidebarContent({ user, currentKey, unreadCount, onNotifOpen, onLogout, onClose }) {
   const nav = useNavigate();
-
-  const [savedId, setSavedId] = useState(
-    () => localStorage.getItem(LAST_WORKSPACE_KEY) ?? null
-  );
-
-  // 워크스페이스 목록
-  const { data: workspaces = [], isLoading: wsLoading } = useQuery({
-    queryKey: ['workspaces'],
-    queryFn: async () => {
-      const res = await api.get('/workspaces');
-      return res.data.data;
-    },
-  });
-
-  // savedId가 목록에 존재하면 사용, 없거나 null이면 첫 번째 워크스페이스
-  const selectedWorkspace =
-    workspaces.find(ws => ws.publicId === savedId) ?? workspaces[0] ?? null;
-  const selectedWorkspaceId = selectedWorkspace?.publicId ?? null;
+  const { workspaces, wsLoading, selectedWorkspace, selectedWorkspaceId, switchWorkspace } = useWorkspace()
 
   // 선택된 워크스페이스의 프로젝트 목록
   const { data: projects = [], isLoading: projLoading } = useQuery({
@@ -40,12 +24,6 @@ export default function SidebarContent({ user, currentKey, unreadCount, onNotifO
     enabled: !!selectedWorkspaceId,
   });
 
-  // 워크스페이스 전환: state + localStorage 동시 업데이트
-  const handleWorkspaceSwitch = (wsPublicId) => {
-    setSavedId(wsPublicId);
-    localStorage.setItem(LAST_WORKSPACE_KEY, wsPublicId);
-  };
-
   const handleNavigate = (key) => {
     nav(key);
     onClose?.();
@@ -53,12 +31,22 @@ export default function SidebarContent({ user, currentKey, unreadCount, onNotifO
 
   return (
     <Flex vertical style={{ height: '100%', overflow: 'hidden' }}>
+      <Flex
+        align="center"
+        gap={8}
+        style={{ padding: '18px 16px 14px', flexShrink: 0 }}
+      >
+        <FolderOpenFilled style={{ fontSize: 20, color: '#fff' }} />
+        <Text strong style={{ fontSize: 15, color: '#fff', letterSpacing: '-0.5px' }}>
+          Let'z Collab
+        </Text>
+      </Flex>
       <WorkspaceSwitcher
         user={user}
         workspaces={workspaces}
         selectedWorkspace={selectedWorkspace}
         isLoading={wsLoading}
-        onSwitch={handleWorkspaceSwitch}
+        onSwitch={switchWorkspace}
       />
       <SidebarNav
         currentKey={currentKey}

@@ -1,0 +1,1 @@
+export const LAST_WORKSPACE_KEY = 'lastWorkspaceId';

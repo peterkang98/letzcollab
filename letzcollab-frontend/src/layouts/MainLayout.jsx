@@ -6,6 +6,7 @@ import { useState } from "react";
 import api from '../api/axios.js';
 import NotificationDrawer from "../components/sidebar/NotificationDrawer.jsx";
 import SidebarContent from "../components/sidebar/SidebarContent.jsx";
+import { WorkspaceProvider } from "../contexts/WorkspaceContext.jsx";
 
 const { Sider, Header, Content } = Layout;
 const { Text } = Typography;
@@ -63,94 +64,96 @@ export default function MainLayout() {
   };
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <WorkspaceProvider>
+      <Layout style={{ minHeight: '100vh' }}>
 
-      {/* 데스크탑: 고정 사이드바 */}
-      {isDesktop && (
-        <Sider
-          width={SIDEBAR_WIDTH}
-          style={{
+        {/* 데스크탑: 고정 사이드바 */}
+        {isDesktop && (
+          <Sider
+            width={SIDEBAR_WIDTH}
+            style={{
+              background: SIDEBAR_BG,
+              position: 'fixed',
+              left: 0, top: 0, bottom: 0,
+              zIndex: 100,
+              overflow: 'hidden',
+            }}
+          >
+            <SidebarContent {...sidebarProps} onClose={handleNavClose}/>
+          </Sider>
+        )}
+
+        {/* 모바일: 상단 헤더 */}
+        {!isDesktop && (
+          <Header style={{
             background: SIDEBAR_BG,
-            position: 'fixed',
-            left: 0, top: 0, bottom: 0,
+            padding: '0 16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            position: 'sticky',
+            top: 0,
             zIndex: 100,
-            overflow: 'hidden',
-          }}
-        >
-          <SidebarContent {...sidebarProps} onClose={handleNavClose} />
-        </Sider>
-      )}
-
-      {/* 모바일: 상단 헤더 */}
-      {!isDesktop && (
-        <Header style={{
-          background: SIDEBAR_BG,
-          padding: '0 16px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          position: 'sticky',
-          top: 0,
-          zIndex: 100,
-          height: 56,
-          lineHeight: '56px',
-        }}>
-          <Flex align="center" gap={8}>
-            <FolderOpenFilled style={{ fontSize: 20, color: '#fff' }} />
-            <Text strong style={{ fontSize: 16, color: '#fff', letterSpacing: '-0.5px' }}>
-              Let'z Collab
-            </Text>
-          </Flex>
-          <Flex gap={4} align="center">
-            <Badge count={unreadCount} size="small" offset={[-2, 2]}>
+            height: 56,
+            lineHeight: '56px',
+          }}>
+            <Flex align="center" gap={8}>
+              <FolderOpenFilled style={{ fontSize: 20, color: '#fff' }}/>
+              <Text strong style={{ fontSize: 16, color: '#fff', letterSpacing: '-0.5px' }}>
+                Let'z Collab
+              </Text>
+            </Flex>
+            <Flex gap={4} align="center">
+              <Badge count={unreadCount} size="small" offset={[-2, 2]}>
+                <Button
+                  type="text"
+                  icon={<BellOutlined/>}
+                  onClick={() => setIsNotifOpen(true)}
+                  style={{ color: 'rgba(255,255,255,0.8)' }}
+                />
+              </Badge>
               <Button
                 type="text"
-                icon={<BellOutlined />}
-                onClick={() => setIsNotifOpen(true)}
+                icon={<MenuOutlined/>}
+                onClick={() => setIsMenuOpen(true)}
                 style={{ color: 'rgba(255,255,255,0.8)' }}
               />
-            </Badge>
-            <Button
-              type="text"
-              icon={<MenuOutlined />}
-              onClick={() => setIsMenuOpen(true)}
-              style={{ color: 'rgba(255,255,255,0.8)' }}
-            />
-          </Flex>
-        </Header>
-      )}
+            </Flex>
+          </Header>
+        )}
 
-      {/* 모바일 메뉴 드로어 */}
-      <Drawer
-        open={isMenuOpen}
-        onClose={() => setIsMenuOpen(false)}
-        placement="left"
-        styles={{
-          wrapper: { width: SIDEBAR_WIDTH },
-          body: { padding: 0, background: SIDEBAR_BG },
-          header: { display: 'none' },
-        }}
-      >
-        <SidebarContent {...sidebarProps} onClose={handleNavClose} />
-      </Drawer>
+        {/* 모바일 메뉴 드로어 */}
+        <Drawer
+          open={isMenuOpen}
+          onClose={() => setIsMenuOpen(false)}
+          placement="left"
+          styles={{
+            wrapper: { width: SIDEBAR_WIDTH },
+            body: { padding: 0, background: SIDEBAR_BG },
+            header: { display: 'none' },
+          }}
+        >
+          <SidebarContent {...sidebarProps} onClose={handleNavClose}/>
+        </Drawer>
 
-      {/* 알림 드로어 */}
-      <NotificationDrawer
-        open={isNotifOpen}
-        onClose={() => setIsNotifOpen(false)}
-      />
+        {/* 알림 드로어 */}
+        <NotificationDrawer
+          open={isNotifOpen}
+          onClose={() => setIsNotifOpen(false)}
+        />
 
-      {/* 콘텐츠 영역 */}
-      <Layout style={{
-        marginLeft: isDesktop ? SIDEBAR_WIDTH : 0,
-        background: '#e0e7f5',
-        minHeight: '100vh',
-      }}>
-        <Content>
-          <Outlet />
-        </Content>
+        {/* 콘텐츠 영역 */}
+        <Layout style={{
+          marginLeft: isDesktop ? SIDEBAR_WIDTH : 0,
+          background: '#e0e7f5',
+          minHeight: '100vh',
+        }}>
+          <Content>
+            <Outlet/>
+          </Content>
+        </Layout>
+
       </Layout>
-
-    </Layout>
+    </WorkspaceProvider>
   );
 };
