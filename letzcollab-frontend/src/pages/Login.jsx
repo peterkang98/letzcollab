@@ -4,6 +4,7 @@ import { LockOutlined, MailOutlined } from "@ant-design/icons";
 import AuthFormInput from "../components/AuthFormInput.jsx";
 import { useMutation } from "@tanstack/react-query";
 import api from "../api/axios.js";
+import { INVITATION_TOKEN_KEY } from "../constants/StorageKeys.js";
 
 const { Title, Text } = Typography;
 
@@ -34,7 +35,13 @@ export default function Login() {
       );
       message.success("로그인에 성공했습니다!");
 
-      nav("/", { replace: true });
+      // 초대 토큰이 있으면 수락 페이지로, 없으면 홈으로
+      const pendingToken = localStorage.getItem(INVITATION_TOKEN_KEY);
+      if (pendingToken) {
+        nav(`/workspaces/verify-invitation-email?token=${pendingToken}`, { replace: true });
+      } else {
+        nav("/", { replace: true });
+      }
     },
     onError: (error) => {
       const res = error.response?.data;
