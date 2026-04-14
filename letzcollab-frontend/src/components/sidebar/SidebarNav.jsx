@@ -1,5 +1,5 @@
 import { Menu, Skeleton, Typography } from 'antd';
-import { DashboardOutlined, FolderOutlined, UserOutlined } from '@ant-design/icons';
+import { DashboardOutlined, FolderOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
@@ -24,8 +24,17 @@ export default function SidebarNav({ currentKey, selectedWorkspaceId, projects, 
         label: p.name,
       }));
 
+  const workspaceSettingsKey = selectedWorkspaceId ? `/workspaces/${selectedWorkspaceId}/settings` : null;
+
   const menuItems = [
     ...NAV_ITEMS,
+    ...(workspaceSettingsKey
+      ? [{
+        key: workspaceSettingsKey,
+        icon: <SettingOutlined />,
+        label: '워크스페이스 설정',
+      }]
+      : []),
     { type: 'divider' },
     { key: 'projects-group', label: '프로젝트', type: 'group' },
     ...projectMenuItems,
