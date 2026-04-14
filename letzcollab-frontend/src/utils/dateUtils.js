@@ -35,3 +35,11 @@ export function timeAgo(dateStr) {
 
   return `${Math.floor(months / 12)}년 전`;
 }
+
+// LocalDateTime 문자열 → "YYYY.MM.DD HH:mm" 포맷
+export function formatDateTime(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
