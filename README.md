@@ -402,6 +402,15 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 | DELETE | `/workspaces/{workspacePublicId}/projects/{projectPublicId}/members/{memberPublicId}`                   | 멤버 강퇴         | 🔒 |
 | POST   | `/workspaces/{workspacePublicId}/projects/{projectPublicId}/members/{targetUserPublicId}/change-leader` | 프로젝트 리더 변경    | 🔒 |
 
+### My Project Member
+
+| 메소드    | Endpoint                                                                 | 설명              | 인증 |
+|--------|--------------------------------------------------------------------------|-----------------|----|
+| GET    | `/projects/{projectPublicId}/members/me`                                 | 내 프로젝트 멤버 정보 조회 | 🔒 |
+| PATCH  | `/projects/{projectPublicId}/members/me`                                 | 본인 직책 수정        | 🔒 |
+| DELETE | `/projects/{projectPublicId}/members/me`                                 | 프로젝트 자진 탈퇴      | 🔒 |
+| POST   | `/projects/{projectPublicId}/members/{targetUserPublicId}/change-leader` | 프로젝트 리더 변경      | 🔒 |
+
 ### Task
 
 | 메소드    | Endpoint                                                          | 설명                  | 인증 |
