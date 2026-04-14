@@ -46,8 +46,7 @@ export default function MainLayout() {
     }
   }
 
-  const NAV_KEYS = ['/', '/me'];
-  const currentKey = NAV_KEYS.find(key => location.pathname === key) ?? '/';
+  const currentKey = location.pathname;
 
   // 메뉴 클릭 시 페이지 이동 + 모바일 드로어 닫기
   const handleNavClose = (key) => {
@@ -79,7 +78,7 @@ export default function MainLayout() {
               overflow: 'hidden',
             }}
           >
-            <SidebarContent {...sidebarProps} onClose={handleNavClose}/>
+            <SidebarContent {...sidebarProps}/>
           </Sider>
         )}
 
