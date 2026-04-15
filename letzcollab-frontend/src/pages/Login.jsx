@@ -4,7 +4,7 @@ import { LockOutlined, MailOutlined } from "@ant-design/icons";
 import AuthFormInput from "../components/AuthFormInput.jsx";
 import { useMutation } from "@tanstack/react-query";
 import api from "../api/axios.js";
-import { INVITATION_TOKEN_KEY } from "../constants/StorageKeys.js";
+import { INVITATION_TOKEN_KEY } from "../constants/storageKeys.js";
 
 const { Title, Text } = Typography;
 
