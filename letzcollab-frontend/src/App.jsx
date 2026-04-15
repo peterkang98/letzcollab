@@ -12,6 +12,10 @@ import RequestPasswordReset from "./pages/RequestPasswordReset.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import TaskDetailPage from "./pages/TaskDetailPage.jsx";
+import WorkspaceSettingsPage from "./pages/WorkspaceSettingsPage.jsx";
+import AcceptInvitationPage from "./pages/AcceptInvitationPage.jsx";
+import MyPage from "./pages/MyPage.jsx";
+import ProjectDetailPage from "./pages/ProjectDetailPage.jsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,11 +34,17 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
+            {/* 로그인 여부와 무관하게 접근 가능 */}
+            <Route path="/workspaces/verify-invitation-email" element={<AcceptInvitationPage />} />
+
             {/* 인증이 필요한 페이지들의 레이아웃과 라우팅 설정 */}
             <Route element={<PrivateRoute/>}>
               <Route element={<MainLayout/>}>
                 <Route path="/" element={<Dashboard/>}/>
+                <Route path="/me" element={<MyPage />} />
+                <Route path="/workspaces/:workspacePublicId/projects/:projectPublicId" element={<ProjectDetailPage />} />
                 <Route path="/projects/:projectPublicId/tasks/:taskPublicId" element={<TaskDetailPage />} />
+                <Route path="/workspaces/:workspacePublicId/settings" element={<WorkspaceSettingsPage />} />
               </Route>
             </Route>
 
