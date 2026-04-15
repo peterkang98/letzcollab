@@ -22,6 +22,19 @@ export function WorkspaceProvider({ children }) {
   const selectedWorkspace = workspaces.find((ws) => ws.publicId === savedId) ?? workspaces[0] ?? null;
   const selectedWorkspaceId = selectedWorkspace?.publicId ?? null;
 
+  // 내 워크스페이스 권한 조회
+  const { data: myWorkspaceMember } = useQuery({
+    queryKey: ['workspaceMember', selectedWorkspaceId, 'me'],
+    queryFn: async () => {
+      const res = await api.get(`/workspaces/${selectedWorkspaceId}/members/me`);
+      return res.data.data;
+    },
+    enabled: !!selectedWorkspaceId,
+    staleTime: 0,
+  });
+
+  const myWorkspaceRole = myWorkspaceMember?.role ?? null;
+
   // selectedWorkspace 확정 시 localStorage에 동기화
   useEffect(() => {
     if (selectedWorkspaceId) {
@@ -35,7 +48,7 @@ export function WorkspaceProvider({ children }) {
 
   return (
     <WorkspaceContext.Provider
-      value={{ workspaces, wsLoading, selectedWorkspace, selectedWorkspaceId, switchWorkspace }}
+      value={{ workspaces, wsLoading, selectedWorkspace, selectedWorkspaceId, switchWorkspace, myWorkspaceRole }}
     >
       {children}
     </WorkspaceContext.Provider>
