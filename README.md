@@ -9,7 +9,31 @@
 ---
 ## 스크린샷
 
-<img width="1930" height="1608" alt="Image" src="https://github.com/user-attachments/assets/cbc568da-0dee-4e70-ac61-41a28f937fe4" />
+> 반응형 웹 디자인
+
+<img width="2912" height="1456" alt="Image" src="https://github.com/user-attachments/assets/76d1d906-1448-47aa-b4c3-039171b7d26c" />
+
+> 사이드바 기능
+
+<img width="1858" height="1460" alt="Image" src="https://github.com/user-attachments/assets/b3f74286-ec31-4535-83f4-40396e185dbc" />
+
+<img width="2006" height="1400" alt="Image" src="https://github.com/user-attachments/assets/fb4f748a-113f-41f4-bffd-42af056350c1" />
+
+> 워크스페이스 설정 페이지
+
+<img width="3150" height="1772" alt="Image" src="https://github.com/user-attachments/assets/e378bb0f-d72f-4392-a124-e236bd460a43" />
+
+> 프로젝트 상세 조회 페이지 (칸반 보드)
+
+<img width="2528" height="1456" alt="Image" src="https://github.com/user-attachments/assets/8bec5540-82a2-44fc-a87f-b10a0cb3d0e8" />
+
+<img width="2526" height="1596" alt="Image" src="https://github.com/user-attachments/assets/c7303c84-03a7-42bf-b1cb-3637f93a8e3e" />
+
+> 업무 상세 조회 페이지
+
+<img width="3024" height="1722" alt="Image" src="https://github.com/user-attachments/assets/3f686e1d-eb6e-4805-8338-8df85dd58b55" />
+
+> 스웨거 문서
 
 <img width="2146" height="3248" alt="Image" src="https://github.com/user-attachments/assets/cccff5cd-77f3-4734-8c47-641bf1fa8599" />
 
@@ -71,6 +95,8 @@
 | Axios             | 1.13.5  | HTTP 클라이언트        |
 | Ant Design        | 6.3.0   | UI 컴포넌트 라이브러리     |
 | @ant-design/icons | 6.1.0   | 아이콘               |
+| @dnd-kit/react    | 0.4.0   | 드래그 앤 드롭 툴킷       |
+| dayjs             | 1.11.20 | 날짜 포맷팅 라이브러리      |
 
 ### 2.3 로컬 실행 방법
 
@@ -375,6 +401,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 |--------|-------------------------------------------------------------------------------|---------------|----|
 | POST   | `/workspaces/{workspacePublicId}/invitations`                                 | 멤버 초대 이메일 발송  | 🔒 |
 | POST   | `/workspaces/invitations/accept`                                              | 초대 수락         | 🔒 |
+| GET    | `/workspaces/{workspacePublicId}/members/me`                                  | 본인 권한/직책 조회   | 🔒 |
 | PATCH  | `/workspaces/{workspacePublicId}/members/me`                                  | 본인 직책 수정      | 🔒 |
 | PATCH  | `/workspaces/{workspacePublicId}/members/{memberPublicId}`                    | 타 멤버 권한/직책 수정 | 🔒 |
 | DELETE | `/workspaces/{workspacePublicId}/members/me`                                  | 워크스페이스 자진 탈퇴  | 🔒 |
@@ -500,33 +527,69 @@ letzcollab/
 │
 ├── letzcollab-frontend/                 # React + Vite
 │   ├── Dockerfile
-│   ├── index.html                       
+│   ├── index.html
 │   ├── vite.config.js
 │   ├── eslint.config.js
 │   ├── package.json
-│   ├── public/                          
+│   ├── public/
 │   └── src/
 │       ├── api/
 │       │   └── axios.js                 # Axios 인스턴스 (baseURL, credentials, JWT 만료 인터셉터)
-│       ├── components/                  
+│       ├── components/
+│       │   ├── dashboard/
+│       │   │   ├── ProjectCard.jsx      # 프로젝트 카드 (상태, 리더, 기간, 공개여부 표시)
+│       │   │   └── TaskCard.jsx         # 업무 카드 (우선순위, 상태, 마감일 표시)
+│       │   ├── project/
+│       │   │   ├── AddProjectMemberModal.jsx
+│       │   │   ├── CreateTaskModal.jsx
+│       │   │   ├── EditProjectMemberModal.jsx
+│       │   │   ├── EditProjectModal.jsx
+│       │   │   └── KanbanBoard.jsx      # 드래그 앤 드롭 칸반 보드
+│       │   ├── sidebar/
+│       │   │   ├── CreateProjectModal.jsx
+│       │   │   ├── CreateWorkspaceModal.jsx
+│       │   │   ├── NotificationDrawer.jsx
+│       │   │   ├── SidebarContent.jsx
+│       │   │   ├── SidebarFooter.jsx
+│       │   │   ├── SidebarNav.jsx
+│       │   │   └── WorkspaceSwitcher.jsx  # 사이드바에서 워크스페이스 선택
+│       │   ├── task/
+│       │   │   ├── CommentItem.jsx
+│       │   │   ├── CreateSubTaskModal.jsx
+│       │   │   ├── EditTaskModal.jsx
+│       │   │   └── SubTaskCard.jsx
+│       │   ├── workspace/
+│       │   │   ├── EditMemberModal.jsx
+│       │   │   └── InviteMemberModal.jsx
 │       │   ├── AuthFormInput.jsx
-│       │   ├── Logo.jsx
-│       │   ├── ProjectCard.jsx          # 프로젝트 카드 (상태, 리더, 기간, 공개여부 표시)
-│       │   ├── TaskCard.jsx             # 업무 카드 (우선순위, 상태, 마감일 표시)
-│       │   └── WorkspaceSelect.jsx      # 워크스페이스 선택 셀렉트박스
+│       │   └── Logo.jsx
 │       ├── constants/
+│       │   ├── notificationConfig.js    # 알림 타입 라벨/색상 매핑 및 링크 빌더
+│       │   ├── projectRole.js           # ProjectRole enum 라벨/색상 매핑
 │       │   ├── projectStatus.js         # ProjectStatus enum 라벨/색상 매핑
-│       │   └── taskStatus.js            # TaskStatus, TaskPriority enum 라벨/색상 매핑
-│       ├── layouts/                     
+│       │   ├── storageKeys.js           # localStorage 키 상수
+│       │   ├── taskStatus.js            # TaskStatus, TaskPriority enum 라벨/색상 매핑
+│       │   └── workspaceRole.js         # WorkspaceRole enum 라벨/색상 매핑 및 권한 유틸
+│       ├── contexts/
+│       │   └── WorkspaceContext.jsx     # 선택한 워크스페이스의 publicId + 내 권한 컨텍스트
+│       ├── hooks/
+│       │   ├── useCurrentUser.js        # 로그인 사용자 정보 조회 훅
+│       │   └── useMyProjectRole.js      # 내 프로젝트 역할 조회 훅
+│       ├── layouts/
 │       │   ├── AuthLayout.jsx           # 인증 관련 페이지 레이아웃
-│       │   └── MainLayout.jsx           # 로그인 후 메인 페이지 레이아웃 (헤더, 로그아웃)
-│       ├── pages/                       
+│       │   └── MainLayout.jsx           # 로그인 후 메인 페이지 레이아웃 (사이드바, 반응형)
+│       ├── pages/
+│       │   ├── AcceptInvitationPage.jsx # 워크스페이스 초대 수락 페이지
 │       │   ├── Dashboard.jsx            # 메인 대시보드 (워크스페이스 선택, 프로젝트/업무 목록)
-│       │   ├── Login.jsx                
-│       │   ├── Signup.jsx
-│       │   ├── VerifyEmail.jsx
+│       │   ├── Login.jsx
+│       │   ├── MyPage.jsx               # 내 정보 수정 페이지
+│       │   ├── ProjectDetailPage.jsx    # 프로젝트 상세 (멤버, 칸반 보드)
 │       │   ├── RequestPasswordReset.jsx
-│       │   └── ResetPassword.jsx
+│       │   ├── ResetPassword.jsx
+│       │   ├── Signup.jsx
+│       │   ├── TaskDetailPage.jsx       # 업무 상세 (댓글, 하위 업무)
+│       │   ├── VerifyEmail.jsx
+│       │   └── WorkspaceSettingsPage.jsx # 워크스페이스 설정 및 멤버 관리
 │       ├── routes/
 │       │   ├── PrivateRoute.jsx         # 인증 필요 라우트 가드
 │       │   └── PublicRoute.jsx          # 비인증 전용 라우트 가드
@@ -539,25 +602,27 @@ letzcollab/
 │
 └── letzcollab-backend/                  # Spring Boot
     ├── Dockerfile
-    ├── build.gradle                     
-    ├── docker-compose.yml               # 로컬 개발용 PostgreSQL 실행
+    ├── build.gradle
+    ├── docker-compose.yml               # 로컬 개발용 PostgreSQL + MailHog 컨테이너 실행
     └── src/main/
         ├── resources/
-        │   ├── application.yml          
-        │   ├── application-local.yml    
-        │   └── application-prod.yml     
+        │   ├── application.yml
+        │   ├── application-local.yml
+        │   └── application-prod.yml
         └── java/xyz/letzcollab/backend/
-            ├── controller/              
-            │   ├── AuthController.java  
+            ├── controller/
+            │   ├── AuthController.java
             │   ├── UserController.java
             │   ├── WorkspaceController.java
             │   ├── WorkspaceMemberController.java
             │   ├── ProjectController.java
             │   ├── ProjectMemberController.java
+            │   ├── MyProjectMemberController.java  # /v1/projects/{id}/members — 내 멤버 정보 조회/수정/탈퇴/리더 변경
             │   ├── TaskController.java
             │   ├── TaskCommentController.java
-            │   └── NotificationController.java
-            ├── service/                 
+            │   ├── NotificationController.java
+            │   └── MyController.java               # /v1/my — 로그인 사용자 기준 통합 조회
+            ├── service/
             │   ├── AuthService.java
             │   ├── UserService.java
             │   ├── WorkspaceService.java
@@ -566,7 +631,8 @@ letzcollab/
             │   ├── ProjectMemberService.java
             │   ├── TaskService.java
             │   ├── TaskCommentService.java
-            │   └── NotificationService.java
+            │   ├── NotificationService.java
+            │   └── MyService.java                  # 내 업무 조회 서비스
             ├── repository/              # Spring Data JPA + QueryDSL
             │   ├── UserRepository.java
             │   ├── VerificationTokenRepository.java
@@ -574,7 +640,7 @@ letzcollab/
             │   ├── WorkspaceMemberRepository.java
             │   ├── WorkspaceInvitationRepository.java
             │   ├── ProjectRepository.java
-            │   ├── ProjectRepositoryCustom.java    
+            │   ├── ProjectRepositoryCustom.java
             │   ├── ProjectRepositoryCustomImpl.java
             │   ├── ProjectMemberRepository.java
             │   ├── TaskRepository.java
@@ -582,7 +648,7 @@ letzcollab/
             │   ├── TaskRepositoryCustomImpl.java
             │   ├── TaskCommentRepository.java
             │   └── NotificationRepository.java
-            ├── entity/                  
+            ├── entity/
             │   ├── User.java
             │   ├── VerificationToken.java
             │   ├── Workspace.java
@@ -626,7 +692,8 @@ letzcollab/
             │   │   ├── OwnerDto.java
             │   │   ├── MemberSummaryDto.java
             │   │   ├── MemberUpdateMyselfRequest.java
-            │   │   └── MemberUpdateOtherRequest.java
+            │   │   ├── MemberUpdateOtherRequest.java
+            │   │   └── MyWorkspaceMemberResponse.java
             │   ├── project/
             │   │   ├── CreateProjectRequest.java
             │   │   ├── UpdateProjectRequest.java
@@ -636,6 +703,7 @@ letzcollab/
             │   │   ├── AddMemberRequest.java
             │   │   ├── UpdateMyselfRequest.java
             │   │   ├── UpdateOtherMemberRequest.java
+            │   │   ├── MyProjectMemberResponse.java
             │   │   ├── LeaderDto.java
             │   │   └── MemberSummaryDto.java
             │   ├── task/
@@ -643,7 +711,9 @@ letzcollab/
             │   │   ├── UpdateTaskRequest.java
             │   │   ├── TaskResponse.java
             │   │   ├── TaskDetailsResponse.java
-            │   │   └── TaskSearchCond.java
+            │   │   ├── TaskSearchCond.java
+            │   │   ├── MyTaskResponse.java
+            │   │   └── MyTaskSearchCond.java
             │   ├── comment/
             │   │   ├── CreateCommentRequest.java
             │   │   ├── UpdateCommentRequest.java
@@ -659,7 +729,7 @@ letzcollab/
             │   │   └── WebConfig.java           # Page 객체를 PagedModel DTO로 변환해서 응답 반환
             │   ├── dto/
             │   │   └── ApiResponse.java         # 공통 API 응답 클래스
-            │   ├── email/                       
+            │   ├── email/
             │   │   ├── context/
             │   │   │   ├── EmailContext.java                    # 각 EmailContext가 구현하는 인터페이스
             │   │   │   ├── VerifyEmailContext.java
@@ -697,8 +767,8 @@ letzcollab/
             │       │   ├── JwtAuthenticationFilter.java      # 요청마다 쿠키 또는 헤더에서 JWT 추출 및 인증 처리
             │       │   └── JwtTokenProvider.java             # JWT 생성/파싱/Authentication 객체 반환
             │       ├── userdetails/
-            │       │   ├── CustomUserDetails.java            
-            │       │   └── CustomUserDetailsService.java     
+            │       │   ├── CustomUserDetails.java
+            │       │   └── CustomUserDetailsService.java
             │       ├── AuthErrorHandler.java                 # 필터 레이어에서 예외 발생 시 ApiResponse 형식으로 JSON 직렬화하여 응답
             │       └── SecurityConfig.java                   # Security 필터 체인, CORS, 비밀번호 인코더 등 설정
             └── LetzcollabBackendApplication.java
