@@ -1,9 +1,13 @@
 import { Avatar, Dropdown, Flex, Skeleton, Typography } from 'antd';
-import { CheckOutlined, SwapOutlined } from '@ant-design/icons';
+import { CheckOutlined, PlusOutlined, SwapOutlined } from '@ant-design/icons';
+import { useState } from "react";
+import CreateWorkspaceModal from "./CreateWorkspaceModal.jsx";
 
 const { Text } = Typography;
 
 export default function WorkspaceSwitcher({ user, workspaces, selectedWorkspace, isLoading, onSwitch }) {
+  const [createOpen, setCreateOpen] = useState(false);
+
   const items = [
     {
       key: 'ws-header',
@@ -29,52 +33,66 @@ export default function WorkspaceSwitcher({ user, workspaces, selectedWorkspace,
           )}
         </Flex>
       ),
-    }))
+      onClick: () => onSwitch(ws.publicId)
+    })),
+    { type: 'divider' },
+    {
+      key: 'create-workspace',
+      icon: <PlusOutlined />,
+      label: '새 워크스페이스',
+      onClick: () => setCreateOpen(true)
+    }
   ];
 
-  const handleClick = ({ key }) => {
-    if (key !== 'ws-header') onSwitch(key);
-  };
-
   return (
-    <Dropdown menu={{ items, onClick: handleClick }} trigger={['click']} placement="bottomLeft">
-      <Flex
-        align="center"
-        gap={10}
-        style={{
-          padding: '16px 16px 14px',
-          cursor: 'pointer',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
-          transition: 'background 0.2s',
-          flexShrink: 0,
-        }}
-        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
-        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-      >
-        <Avatar
-          size={28}
-          style={{ background: '#1677ff', fontSize: 13, fontWeight: 700, flexShrink: 0 }}
+    <>
+      <Dropdown menu={{ items }} trigger={['click']} placement="bottomLeft">
+        <Flex
+          align="center"
+          gap={10}
+          style={{
+            padding: '16px 16px 14px',
+            cursor: 'pointer',
+            borderBottom: '1px solid rgba(255,255,255,0.08)',
+            transition: 'background 0.2s',
+            flexShrink: 0,
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
         >
-          {selectedWorkspace?.name?.[0] ?? 'W'}
-        </Avatar>
+          <Avatar
+            size={28}
+            style={{ background: '#1677ff', fontSize: 13, fontWeight: 700, flexShrink: 0 }}
+          >
+            {selectedWorkspace?.name?.[0] ?? 'W'}
+          </Avatar>
 
-        {isLoading ? (
-          <Skeleton.Input active size="small" style={{ flex: 1 }} />
-        ) : (
-          <Text style={{
-            color: '#fff',
-            fontSize: 14,
-            fontWeight: 600,
-            flex: 1,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}>
-            {selectedWorkspace?.name ?? '워크스페이스 선택'}
-          </Text>
-        )}
-        <SwapOutlined style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, flexShrink: 0 }} />
-      </Flex>
-    </Dropdown>
+          {isLoading ? (
+            <Skeleton.Input active size="small" style={{ flex: 1 }} />
+          ) : (
+            <Text style={{
+              color: '#fff',
+              fontSize: 14,
+              fontWeight: 600,
+              flex: 1,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}>
+              {selectedWorkspace?.name ?? '워크스페이스 선택'}
+            </Text>
+          )}
+          <SwapOutlined style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, flexShrink: 0 }} />
+        </Flex>
+      </Dropdown>
+      <CreateWorkspaceModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onSuccess={(newId) => {
+          setCreateOpen(false);
+          onSwitch(newId);
+        }}
+      />
+    </>
   );
 }
