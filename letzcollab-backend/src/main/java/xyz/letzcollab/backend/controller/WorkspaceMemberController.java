@@ -7,10 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import xyz.letzcollab.backend.dto.workspace.AcceptWorkspaceInvitationRequest;
-import xyz.letzcollab.backend.dto.workspace.MemberUpdateMyselfRequest;
-import xyz.letzcollab.backend.dto.workspace.MemberUpdateOtherRequest;
-import xyz.letzcollab.backend.dto.workspace.WorkspaceInviteRequest;
+import xyz.letzcollab.backend.dto.workspace.*;
 import xyz.letzcollab.backend.global.dto.ApiResponse;
 import xyz.letzcollab.backend.global.security.userdetails.CustomUserDetails;
 import xyz.letzcollab.backend.service.WorkspaceMemberService;
@@ -51,6 +48,19 @@ public class WorkspaceMemberController {
 	) {
 		memberService.acceptInvitation(userDetails.getPublicId(), request.token());
 		return ResponseEntity.ok(ApiResponse.success("워크스페이스 참여 완료! 이제부터 워크스페이스 멤버로 활동하실 수 있습니다."));
+	}
+
+	/**
+	 * 본인 정보(권한, 직책) 조회
+	 */
+	@Operation(summary = "본인 권한/직책 조회", description = "워크스페이스 내에서 자신의 권한 및 직책을 조회합니다.")
+	@GetMapping("/{workspacePublicId}/members/me")
+	public ResponseEntity<ApiResponse<MyWorkspaceMemberResponse>> getMyself(
+			@AuthenticationPrincipal CustomUserDetails userDetails,
+			@PathVariable UUID workspacePublicId
+	) {
+		MyWorkspaceMemberResponse res = memberService.getMyself(workspacePublicId, userDetails.getPublicId());
+		return ResponseEntity.ok(ApiResponse.success(res));
 	}
 
 	/**

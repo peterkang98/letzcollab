@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import xyz.letzcollab.backend.dto.workspace.MyWorkspaceMemberResponse;
 import xyz.letzcollab.backend.entity.User;
 import xyz.letzcollab.backend.entity.Workspace;
 import xyz.letzcollab.backend.entity.WorkspaceInvitation;
@@ -92,6 +93,13 @@ public class WorkspaceMemberService {
 
 		invitation.accept();
 		log.info("워크스페이스 초대 수락 - workspaceId={}, userId={}", workspace.getPublicId(), userPublicId);
+	}
+
+	@Transactional(readOnly = true)
+	public MyWorkspaceMemberResponse getMyself(UUID workspacePublicId, UUID userPublicId) {
+		WorkspaceMember me = memberRepository.findByWorkspacePublicIdAndUserPublicId(workspacePublicId, userPublicId)
+											 .orElseThrow(() -> new CustomException(WORKSPACE_NOT_FOUND_OR_ACCESS_DENIED));
+		return MyWorkspaceMemberResponse.from(me);
 	}
 
 	public void updateMyself(UUID workspacePublicId, UUID userPublicId, String newPosition) {
