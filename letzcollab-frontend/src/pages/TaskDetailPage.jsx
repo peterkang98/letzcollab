@@ -1,13 +1,18 @@
 import { useState } from 'react';
+import { Avatar, Badge, Button, Card, Divider, Flex, Input, message, Modal, Skeleton, Tag, Typography, } from 'antd';
 import {
-  Avatar, Badge, Button, Card, Divider, Flex,
-  Input, Modal, Skeleton, Tag, Typography, message,
-} from 'antd';
-import {
-  ArrowLeftOutlined, BranchesOutlined, CalendarOutlined,
-  ClockCircleOutlined, DeleteOutlined, EditOutlined,
-  ExclamationCircleOutlined, FlagOutlined, MessageOutlined,
-  PlusOutlined, SendOutlined, UserOutlined,
+  ArrowLeftOutlined,
+  BranchesOutlined,
+  CalendarOutlined,
+  ClockCircleOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  ExclamationCircleOutlined,
+  FlagOutlined,
+  MessageOutlined,
+  PlusOutlined,
+  SendOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -32,17 +37,15 @@ export default function TaskDetailPage() {
   const nav = useNavigate();
   const queryClient = useQueryClient();
 
-  // 프로젝트 멤버 목록(담당자 선택)에 workspacePublicId 필요
-  // URL에 넣는 대신 localStorage에서 읽음
   const workspacePublicId = localStorage.getItem(LAST_WORKSPACE_KEY);
 
-  const [commentContent, setCommentContent]       = useState('');
-  const [editModalOpen, setEditModalOpen]         = useState(false);
-  const [subTaskModalOpen, setSubTaskModalOpen]   = useState(false);
+  const [commentContent, setCommentContent] = useState('');
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [subTaskModalOpen, setSubTaskModalOpen] = useState(false);
 
   const { data: me } = useCurrentUser();
 
-  // ── 업무 상세 조회 ────────────────────────────────────────────────────────
+  // 업무 상세 조회
   const { data: task, isLoading: taskLoading } = useQuery({
     queryKey: ['task', taskPublicId],
     queryFn: async () => {
@@ -53,7 +56,7 @@ export default function TaskDetailPage() {
     refetchIntervalInBackground: false,
   });
 
-  // ── 댓글 목록 조회 ────────────────────────────────────────────────────────
+  // 댓글 목록 조회
   const { data: comments = [], isLoading: commentsLoading } = useQuery({
     queryKey: ['comments', taskPublicId],
     queryFn: async () => {
@@ -64,28 +67,28 @@ export default function TaskDetailPage() {
     refetchIntervalInBackground: false,
   });
 
-  // ── 내 프로젝트 role 조회 (무조건 호출 — role 변경 시점을 알 수 없으므로 staleTime: 0) ──
+  // 내 프로젝트 권한 조회
   const { data: myMember } = useMyProjectRole(projectPublicId);
 
-  // ── 권한 판별 ─────────────────────────────────────────────────────────────
+  // 권한 판별
   const myPublicId = me?.publicId;
-  const myRole     = myMember?.role; // 'ADMIN' | 'MEMBER' | 'VIEWER' | undefined
+  const myRole = myMember?.role;
 
   const isReporter = !!task && task.reporterPublicId === myPublicId;
   const isAssignee = !!task && task.assigneePublicId === myPublicId;
-  const isAdmin    = myRole === 'ADMIN';
-  const isMember   = myRole === 'MEMBER';
+  const isAdmin = myRole === 'ADMIN';
+  const isMember = myRole === 'MEMBER';
 
   // 업무 수정: ADMIN이거나 reporter
   const canEditAll = isAdmin || isReporter;
   // 상태만 수정: 담당자(canEditAll 포함)
-  const canEdit    = canEditAll || isAssignee;
+  const canEdit = canEditAll || isAssignee;
   // 업무 삭제: ADMIN이거나 reporter
-  const canDelete  = isAdmin || isReporter;
+  const canDelete = isAdmin || isReporter;
   // 하위 업무 생성: ADMIN이거나 MEMBER 중 reporter 또는 assignee
   const canCreateSubTask = isAdmin || (isMember && (isReporter || isAssignee));
 
-  // ── 댓글 작성 ─────────────────────────────────────────────────────────────
+  // 댓글 작성
   const commentMutation = useMutation({
     mutationFn: () =>
       api.post(`/projects/${projectPublicId}/tasks/${taskPublicId}/comments`, {
@@ -100,32 +103,34 @@ export default function TaskDetailPage() {
     onError: (e) => message.error(e.response?.data?.message || '댓글 작성에 실패했습니다.'),
   });
 
-  // ── 업무 삭제 ─────────────────────────────────────────────────────────────
+  // 업무 삭제
   const deleteMutation = useMutation({
     mutationFn: () => api.delete(`/projects/${projectPublicId}/tasks/${taskPublicId}`),
-    onSuccess: () => { message.success('업무가 삭제되었습니다.'); nav(-1); },
-    onError:   (e) => message.error(e.response?.data?.message || '삭제에 실패했습니다.'),
+    onSuccess: () => {
+      message.success('업무가 삭제되었습니다.');
+      nav(-1);
+    },
+    onError: (e) => message.error(e.response?.data?.message || '삭제에 실패했습니다.'),
   });
 
   const handleDelete = () =>
     confirm({
       title: '업무를 삭제하시겠습니까?',
-      icon: <ExclamationCircleOutlined />,
+      icon: <ExclamationCircleOutlined/>,
       content: '하위 업무도 함께 삭제됩니다. 이 작업은 되돌릴 수 없습니다.',
       okText: '삭제', okType: 'danger', cancelText: '취소',
       onOk: () => deleteMutation.mutate(),
     });
 
-  // ── 파생 값 ───────────────────────────────────────────────────────────────
-  const status   = task ? STATUS_CONFIG[task.status]     ?? { color: 'default', label: task.status }   : null;
+  const status = task ? STATUS_CONFIG[task.status] ?? { color: 'default', label: task.status } : null;
   const priority = task ? PRIORITY_CONFIG[task.priority] ?? { color: 'default', label: task.priority } : null;
-  const due      = task ? formatDueDate(task.dueDate) : null;
+  const due = task ? formatDueDate(task.dueDate) : null;
 
-  // ── 로딩 / 에러 ───────────────────────────────────────────────────────────
+  // 로딩 / 에러
   if (taskLoading) {
     return (
       <div style={{ padding: '28px 32px', maxWidth: 900, margin: '0 auto' }}>
-        <Skeleton active paragraph={{ rows: 8 }} />
+        <Skeleton active paragraph={{ rows: 8 }}/>
       </div>
     );
   }
@@ -138,13 +143,11 @@ export default function TaskDetailPage() {
     );
   }
 
-  // ── 렌더 ──────────────────────────────────────────────────────────────────
   return (
     <div style={{ padding: '24px 32px', maxWidth: 900, margin: '0 auto' }}>
 
-      {/* 뒤로가기 */}
       <Button
-        type="text" icon={<ArrowLeftOutlined />}
+        type="text" icon={<ArrowLeftOutlined/>}
         onClick={() => nav(-1)}
         style={{ marginBottom: 16, padding: '0 4px', color: '#595959' }}
       >
@@ -156,7 +159,7 @@ export default function TaskDetailPage() {
         <Flex vertical gap={8} style={{ minWidth: 0 }}>
           {task.parentTaskPublicId && (
             <Flex align="center" gap={4}>
-              <BranchesOutlined style={{ fontSize: 12, color: '#8c8c8c' }} />
+              <BranchesOutlined style={{ fontSize: 12, color: '#8c8c8c' }}/>
               <Text
                 type="secondary"
                 style={{ fontSize: 12, cursor: 'pointer' }}
@@ -168,10 +171,10 @@ export default function TaskDetailPage() {
           )}
           <Title level={4} style={{ margin: 0 }}>{task.name}</Title>
           <Flex gap={8} wrap="wrap">
-            <Tag color={priority.color} icon={<FlagOutlined />}>{priority.label}</Tag>
+            <Tag color={priority.color} icon={<FlagOutlined/>}>{priority.label}</Tag>
             <Tag color={status.color}>{status.label}</Tag>
             {due && (
-              <Tag color={due.danger ? 'red' : 'default'} icon={<ClockCircleOutlined />}>
+              <Tag color={due.danger ? 'red' : 'default'} icon={<ClockCircleOutlined/>}>
                 {due.text}
               </Tag>
             )}
@@ -180,10 +183,10 @@ export default function TaskDetailPage() {
 
         <Flex gap={8} style={{ flexShrink: 0 }}>
           {canEdit && (
-            <Button icon={<EditOutlined />} onClick={() => setEditModalOpen(true)}>수정</Button>
+            <Button icon={<EditOutlined/>} onClick={() => setEditModalOpen(true)}>수정</Button>
           )}
           {canDelete && (
-            <Button danger icon={<DeleteOutlined />} loading={deleteMutation.isPending} onClick={handleDelete}>
+            <Button danger icon={<DeleteOutlined/>} loading={deleteMutation.isPending} onClick={handleDelete}>
               삭제
             </Button>
           )}
@@ -193,7 +196,7 @@ export default function TaskDetailPage() {
       {/* 본문 2단 레이아웃 */}
       <Flex gap={24} align="flex-start" wrap="wrap">
 
-        {/* 왼쪽: 설명 · 하위 업무 · 댓글 */}
+        {/* 왼쪽: 설명  하위 업무  댓글 */}
         <Flex vertical gap={16} style={{ flex: '1 1 520px', minWidth: 0 }}>
 
           {/* 설명 */}
@@ -210,10 +213,10 @@ export default function TaskDetailPage() {
               size="small"
               title={
                 <Flex align="center" gap={8}>
-                  <BranchesOutlined />
+                  <BranchesOutlined/>
                   <span>하위 업무</span>
                   {task.subTasks?.length > 0 && (
-                    <Badge count={task.subTasks.length} color="#8c8c8c" />
+                    <Badge count={task.subTasks.length} color="#8c8c8c"/>
                   )}
                 </Flex>
               }
@@ -222,7 +225,7 @@ export default function TaskDetailPage() {
                   <Button
                     type="text"
                     size="small"
-                    icon={<PlusOutlined />}
+                    icon={<PlusOutlined/>}
                     onClick={() => setSubTaskModalOpen(true)}
                   >
                     추가
@@ -251,15 +254,15 @@ export default function TaskDetailPage() {
             size="small"
             title={
               <Flex align="center" gap={8}>
-                <MessageOutlined />
+                <MessageOutlined/>
                 <span>댓글</span>
-                <Badge count={comments.length} color="#8c8c8c" />
+                <Badge count={comments.length} color="#8c8c8c"/>
               </Flex>
             }
           >
             {/* 댓글 작성 폼 */}
             <Flex gap={10} align="flex-start" style={{ marginBottom: 16 }}>
-              <Avatar size={32} icon={<UserOutlined />} style={{ flexShrink: 0, marginTop: 2 }} />
+              <Avatar size={32} icon={<UserOutlined/>} style={{ flexShrink: 0, marginTop: 2 }}/>
               <Flex vertical gap={8} style={{ flex: 1 }}>
                 <TextArea
                   value={commentContent}
@@ -269,7 +272,7 @@ export default function TaskDetailPage() {
                 />
                 <Flex justify="flex-end">
                   <Button
-                    type="primary" icon={<SendOutlined />}
+                    type="primary" icon={<SendOutlined/>}
                     loading={commentMutation.isPending}
                     disabled={!commentContent.trim()}
                     onClick={() => commentMutation.mutate()}
@@ -280,11 +283,11 @@ export default function TaskDetailPage() {
               </Flex>
             </Flex>
 
-            <Divider style={{ margin: '8px 0 16px' }} />
+            <Divider style={{ margin: '8px 0 16px' }}/>
 
             {/* 댓글 목록 */}
             {commentsLoading ? (
-              <Skeleton active paragraph={{ rows: 3 }} />
+              <Skeleton active paragraph={{ rows: 3 }}/>
             ) : comments.length === 0 ? (
               <Flex justify="center" style={{ padding: '24px 0' }}>
                 <Text type="secondary" style={{ fontSize: 13 }}>아직 댓글이 없습니다.</Text>
@@ -311,7 +314,7 @@ export default function TaskDetailPage() {
             <Flex vertical gap={4}>
               <Text type="secondary" style={{ fontSize: 11 }}>담당자</Text>
               <Flex align="center" gap={6}>
-                <Avatar size={20} icon={<UserOutlined />} />
+                <Avatar size={20} icon={<UserOutlined/>}/>
                 <Text style={{ fontSize: 13 }}>{task.assigneeName}</Text>
               </Flex>
             </Flex>
@@ -319,24 +322,24 @@ export default function TaskDetailPage() {
             <Flex vertical gap={4}>
               <Text type="secondary" style={{ fontSize: 11 }}>보고자</Text>
               <Flex align="center" gap={6}>
-                <Avatar size={20} icon={<UserOutlined />} />
+                <Avatar size={20} icon={<UserOutlined/>}/>
                 <Text style={{ fontSize: 13 }}>{task.reporterName}</Text>
               </Flex>
             </Flex>
 
-            <Divider style={{ margin: '4px 0' }} />
+            <Divider style={{ margin: '4px 0' }}/>
 
             <Flex vertical gap={4}>
               <Text type="secondary" style={{ fontSize: 11 }}>마감일</Text>
               <Flex align="center" gap={4}>
-                <CalendarOutlined style={{ fontSize: 12, color: due?.danger ? '#ff4d4f' : '#8c8c8c' }} />
+                <CalendarOutlined style={{ fontSize: 12, color: due?.danger ? '#ff4d4f' : '#8c8c8c' }}/>
                 <Text style={{ fontSize: 13, color: due?.danger ? '#ff4d4f' : undefined }}>
                   {task.dueDate ?? '없음'}
                 </Text>
               </Flex>
             </Flex>
 
-            <Divider style={{ margin: '4px 0' }} />
+            <Divider style={{ margin: '4px 0' }}/>
 
             <Flex vertical gap={4}>
               <Text type="secondary" style={{ fontSize: 11 }}>생성일</Text>
