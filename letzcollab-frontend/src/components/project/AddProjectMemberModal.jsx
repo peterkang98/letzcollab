@@ -49,9 +49,8 @@ export default function AddProjectMemberModal({ open, workspacePublicId, project
         <Form.Item name="targetUserPublicId" label="워크스페이스 멤버"
                    rules={[{ required: true, message: '멤버를 선택하세요.' }]}>
           <Select
-            showSearch
             placeholder="멤버 선택"
-            optionFilterProp="label"
+            showSearch={{ optionFilterProp: 'label' }}
             options={wsMembers.map(m => ({ value: m.publicId, label: `${m.name} (${m.email})` }))}
           />
         </Form.Item>
