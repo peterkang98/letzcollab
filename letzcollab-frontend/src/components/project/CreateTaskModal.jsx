@@ -59,7 +59,7 @@ export default function CreateTaskModal({ open, projectPublicId, members, onClos
         </Form.Item>
         <Form.Item name="assigneePublicId" label="담당자"
                    rules={[{ required: true, message: '담당자를 선택하세요.' }]}>
-          <Select showSearch placeholder="담당자 선택" optionFilterProp="label" options={assigneeOptions} />
+          <Select placeholder="담당자 선택" showSearch={{ optionFilterProp: 'label' }} options={assigneeOptions} />
         </Form.Item>
         <Form.Item name="priority" label="우선순위"
                    rules={[{ required: true, message: '우선순위를 선택하세요.' }]}>
