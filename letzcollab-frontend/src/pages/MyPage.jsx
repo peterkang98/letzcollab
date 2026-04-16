@@ -7,7 +7,6 @@ import {
   DeleteOutlined, EditOutlined, ExclamationCircleOutlined, UserOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import api from '../api/axios.js';
 import { useCurrentUser } from '../hooks/useCurrentUser.js';
 
@@ -15,12 +14,11 @@ const { Title, Text } = Typography;
 const { confirm } = Modal;
 
 export default function MyPage() {
-  const nav = useNavigate();
   const queryClient = useQueryClient();
   const { data: me, isLoading } = useCurrentUser();
   const [editOpen, setEditOpen] = useState(false);
 
-  // ── 내 정보 수정 ──────────────────────────────────────────────────────────
+  // 내 정보 수정
   const updateMutation = useMutation({
     mutationFn: (values) => api.patch('/users/me', values),
     onSuccess: (res) => {
@@ -35,7 +33,7 @@ export default function MyPage() {
     onError: (e) => message.error(e.response?.data?.message || '수정에 실패했습니다.'),
   });
 
-  // ── 회원 탈퇴 ─────────────────────────────────────────────────────────────
+  // 회원 탈퇴
   const withdrawMutation = useMutation({
     mutationFn: () => api.delete('/users/me'),
     onSuccess: () => {
