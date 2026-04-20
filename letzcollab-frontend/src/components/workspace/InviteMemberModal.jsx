@@ -1,9 +1,11 @@
-import { Form, Input, message, Modal } from 'antd';
+import { Alert, Form, Input, message, Modal } from 'antd';
 import { useMutation } from '@tanstack/react-query';
 import api from '../../api/axios.js';
+import { useState } from "react";
 
 export default function InviteMemberModal({ open, workspacePublicId, onClose, onSuccess }) {
   const [form] = Form.useForm();
+  const [rateLimited, setRateLimited] = useState(false);
 
   const mutation = useMutation({
     mutationFn: (values) =>
@@ -16,7 +18,14 @@ export default function InviteMemberModal({ open, workspacePublicId, onClose, on
       form.resetFields();
       onSuccess?.();
     },
-    onError: (e) => message.error(e.response?.data?.message || '초대에 실패했습니다.'),
+    onError: (e) => {
+      const serverError = e.response?.data;
+      if (serverError.errorCode === 'E005') {
+        setRateLimited(true);
+      } else {
+        message.error(serverError?.message || '초대에 실패했습니다.');
+      }
+    }
   });
 
   const handleOk = async () => {
@@ -26,6 +35,7 @@ export default function InviteMemberModal({ open, workspacePublicId, onClose, on
 
   const handleCancel = () => {
     form.resetFields();
+    setRateLimited(false);
     onClose();
   };
 
@@ -38,8 +48,17 @@ export default function InviteMemberModal({ open, workspacePublicId, onClose, on
       okText="초대 이메일 발송"
       cancelText="취소"
       confirmLoading={mutation.isPending}
+      okButtonProps={{ disabled: rateLimited }}
     >
       <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+        {rateLimited && (
+          <Alert
+            type="warning"
+            title="초대 요청 횟수를 초과했습니다. 1시간 후에 다시 시도해주세요."
+            style={{ marginBottom: 16 }}
+            showIcon
+          />
+        )}
         <Form.Item
           name="email"
           label="이메일"

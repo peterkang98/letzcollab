@@ -18,11 +18,13 @@ import xyz.letzcollab.backend.global.email.context.VerifyEmailContext;
 import xyz.letzcollab.backend.global.event.dto.EmailEvent;
 import xyz.letzcollab.backend.global.exception.CustomException;
 import xyz.letzcollab.backend.global.exception.ErrorCode;
+import xyz.letzcollab.backend.global.ratelimit.AuthRateLimiter;
 import xyz.letzcollab.backend.global.security.jwt.JwtTokenProvider;
 import xyz.letzcollab.backend.global.security.userdetails.CustomUserDetails;
 import xyz.letzcollab.backend.repository.UserRepository;
 import xyz.letzcollab.backend.repository.VerificationTokenRepository;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -37,6 +39,7 @@ public class AuthService {
 	private final PasswordEncoder passwordEncoder;
 	private final AuthenticationManager authenticationManager;
 	private final JwtTokenProvider jwtTokenProvider;
+	private final AuthRateLimiter authRateLimiter;
 
 	@Value("${frontend.base-url}")
 	private String frontendURL;
@@ -108,10 +111,7 @@ public class AuthService {
 																 return new CustomException(ErrorCode.VERIFICATION_TOKEN_NOT_FOUND);
 															 });
 
-		if (foundExpiredToken.getUsedAt() != null) {
-			log.warn("인증 메일 재발송 실패 - 이미 사용된 토큰: {}", expiredToken);
-			throw new CustomException(ErrorCode.VERIFICATION_TOKEN_ALREADY_USED);
-		}
+		verifyTokenExpirationAndUsage(expiredToken, foundExpiredToken);
 
 		User foundUser = foundExpiredToken.getUser();
 		VerificationToken newToken = VerificationToken.createEmailVerificationToken(foundUser);
@@ -137,6 +137,8 @@ public class AuthService {
 			throw new CustomException(ErrorCode.LOCKED);
 		}
 
+		authRateLimiter.rateLimitResetPwdReq(email);
+
 		VerificationToken passwordResetToken = VerificationToken.createPasswordVerificationToken(foundUser);
 		tokenRepository.save(passwordResetToken);
 
@@ -158,6 +160,8 @@ public class AuthService {
 		log.info("비밀번호 재설정 완료 - email: {}", foundToken.getUser().getEmail());
 	}
 
+
+	// 헬퍼
 	private VerificationToken getVerificationToken(UUID token) {
 		VerificationToken foundToken = tokenRepository.findByToken(token)
 													  .orElseThrow(() -> {
@@ -179,5 +183,14 @@ public class AuthService {
 	private void sendVerificationEmail(String name, String token, String email) {
 		VerifyEmailContext emailContext = new VerifyEmailContext(name, token, frontendURL);
 		eventPublisher.publishEvent(new EmailEvent(email, emailContext));
+	}
+
+	private void verifyTokenExpirationAndUsage(UUID expiredToken, VerificationToken foundExpiredToken) {
+		if (foundExpiredToken.getUsedAt() != null) {
+			log.warn("인증 메일 재발송 실패 - 이미 사용된 토큰: {}", expiredToken);
+			throw new CustomException(ErrorCode.VERIFICATION_TOKEN_ALREADY_USED);
+		} else if (foundExpiredToken.getExpiresAt().isAfter(LocalDateTime.now().plusMinutes(4))) {
+			throw new CustomException(ErrorCode.VERIFICATION_TOKEN_NOT_EXPIRED);
+		}
 	}
 }

@@ -11,31 +11,31 @@
 
 > 반응형 웹 디자인
 
-<img width="2912" height="1456" alt="Image" src="https://github.com/user-attachments/assets/76d1d906-1448-47aa-b4c3-039171b7d26c" />
+<img width="2912" alt="Image" src="https://github.com/user-attachments/assets/76d1d906-1448-47aa-b4c3-039171b7d26c" />
 
 > 사이드바 기능
 
-<img width="1858" height="1460" alt="Image" src="https://github.com/user-attachments/assets/b3f74286-ec31-4535-83f4-40396e185dbc" />
+<img width="1858" alt="Image" src="https://github.com/user-attachments/assets/b3f74286-ec31-4535-83f4-40396e185dbc" />
 
-<img width="2006" height="1400" alt="Image" src="https://github.com/user-attachments/assets/fb4f748a-113f-41f4-bffd-42af056350c1" />
+<img width="2006" alt="Image" src="https://github.com/user-attachments/assets/fb4f748a-113f-41f4-bffd-42af056350c1" />
 
 > 워크스페이스 설정 페이지
 
-<img width="3150" height="1772" alt="Image" src="https://github.com/user-attachments/assets/e378bb0f-d72f-4392-a124-e236bd460a43" />
+<img width="3150" alt="Image" src="https://github.com/user-attachments/assets/e378bb0f-d72f-4392-a124-e236bd460a43" />
 
 > 프로젝트 상세 조회 페이지 (칸반 보드)
 
-<img width="2528" height="1456" alt="Image" src="https://github.com/user-attachments/assets/8bec5540-82a2-44fc-a87f-b10a0cb3d0e8" />
+<img width="2528" alt="Image" src="https://github.com/user-attachments/assets/8bec5540-82a2-44fc-a87f-b10a0cb3d0e8" />
 
-<img width="2526" height="1596" alt="Image" src="https://github.com/user-attachments/assets/c7303c84-03a7-42bf-b1cb-3637f93a8e3e" />
+<img width="2526" alt="Image" src="https://github.com/user-attachments/assets/c7303c84-03a7-42bf-b1cb-3637f93a8e3e" />
 
 > 업무 상세 조회 페이지
 
-<img width="3024" height="1722" alt="Image" src="https://github.com/user-attachments/assets/3f686e1d-eb6e-4805-8338-8df85dd58b55" />
+<img width="3024" alt="Image" src="https://github.com/user-attachments/assets/3f686e1d-eb6e-4805-8338-8df85dd58b55" />
 
 > 스웨거 문서
 
-<img width="2146" height="3248" alt="Image" src="https://github.com/user-attachments/assets/cccff5cd-77f3-4734-8c47-641bf1fa8599" />
+<img width="2146" alt="Image" src="https://github.com/user-attachments/assets/cccff5cd-77f3-4734-8c47-641bf1fa8599" />
 
 ---
 
@@ -150,7 +150,7 @@ npm run dev
 
 ### 3.1. 아키텍처 다이어그램
 
-<img width="1594" height="1866" alt="Image" src="https://github.com/user-attachments/assets/85281081-1adf-412f-8ba6-fd80178ac5c5" />
+<img width="1594" alt="Image" src="https://github.com/user-attachments/assets/85281081-1adf-412f-8ba6-fd80178ac5c5" />
 
 - NGINX를 리버스 프록시로 설정하여, 리액트 정적 파일 서빙과 `/api/*` 백엔드 라우팅을 분리
 - Let's Encrypt + Certbot으로 SSL 인증서를 발급하여 NGINX 서버에 HTTPS를 적용
@@ -303,13 +303,17 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 ---
 
-#### F. 비동기 이메일 서비스
+#### F. 비동기 이메일 서비스 및 남용 방지 (Rate Limiting)
 
 - `EmailContext` 인터페이스(`getTemplateName()`, `getSubject()`, `getVariables()`)를 전략 패턴으로 설계
     - `VerifyEmailContext`, `PasswordResetEmailContext` 등: 각 이메일 유형을 record로 작성하고 인터페이스를 `EmailContext` 구현
     - 새 이메일 유형 추가 시 서비스 코드 수정 없이 `EmailContext` 구현체만 추가하면 됨 → OCP 준수
 - `@Async` + `@Retryable` + `@TransactionalEventListener` 조합으로 비동기 처리 및 재시도 메커니즘 적용
     - 발송 실패 시 지수 백오프(2s → 4s)로 최대 3회 재시도, 전부 실패 시 `@Recover`에서 에러 로그 기록
+- 이메일 발송 엔드포인트 남용 방지를 NGINX와 Spring Boot 두 레이어에서 처리
+    - NGINX `limit_req_zone`으로 IP 기반 단기 차단 (인증 관련 1분당 1회 / 초대 1분당 10회)
+    - Spring Boot에서 DB 카운트 기반 장기 차단 (비밀번호 재설정 24시간당 3회, 워크스페이스 초대 초대자 기준 1시간당 50회)
+    - `AuthRateLimiter` / `InvitationRateLimiter` 인터페이스를 정의하고 `@Profile`로 구현체를 분리 — prod는 실제 제한, local/test는 `NoOp` 구현체로 제한 없이 동작
 
 ---
 
@@ -357,7 +361,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 ## 4. ERD
 
-<img width="2138" height="2514" alt="Image" src="https://github.com/user-attachments/assets/6838449a-6db3-4dee-b4d8-4c50b20df050" />
+<img width="2138" alt="Image" src="https://github.com/user-attachments/assets/6838449a-6db3-4dee-b4d8-4c50b20df050" />
 
 ---
 
@@ -481,7 +485,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 기존에는 이메일 발송을 서비스 레이어에서 동기적으로 직접 처리하여, SMTP 응답 지연이 API 응답 속도에 직접적인 영향을 미쳤습니다.
 
-<img width="2226" height="1260" alt="Image" src="https://github.com/user-attachments/assets/e4f6237f-a753-427a-885c-1092a1875de0" />
+<img width="2226" alt="Image" src="https://github.com/user-attachments/assets/e4f6237f-a753-427a-885c-1092a1875de0" />
 
 #### 개선 과정
 
@@ -497,7 +501,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 #### 성능 개선 결과 (NCP vCPU 2코어, 10회 측정 기준)
 
-<img width="2234" height="1268" alt="Image" src="https://github.com/user-attachments/assets/b09f1516-6688-443d-82fb-f3f863632740" />
+<img width="2234" alt="Image" src="https://github.com/user-attachments/assets/b09f1516-6688-443d-82fb-f3f863632740" />
 
 | 측정 회차     | 동기 방식 (기존)   | 비동기 방식 (개선 후) |
 |:----------|:-------------|:--------------|
@@ -758,6 +762,13 @@ letzcollab/
             │   │   ├── DataInitializer.java          # 초기 시드 데이터 생성
             │   │   ├── JpaConfig.java
             │   │   └── QuerydslConfig.java
+            │   ├── ratelimit/                        # 이메일 발송 엔드포인트 남용 방지
+            │   │   ├── AuthRateLimiter.java
+            │   │   ├── InvitationRateLimiter.java
+            │   │   ├── NoOpAuthRateLimiter.java
+            │   │   ├── NoOpInvitationRateLimiter.java
+            │   │   ├── ProdAuthRateLimiter.java
+            │   │   └── ProdInvitationRateLimiter.java
             │   ├── scheduler/
             │   │   ├── NotificationCleanupScheduler.java     # 오래된 알림 정리
             │   │   └── TaskDeadlineScheduler.java            # 업무 마감 알림 발송
