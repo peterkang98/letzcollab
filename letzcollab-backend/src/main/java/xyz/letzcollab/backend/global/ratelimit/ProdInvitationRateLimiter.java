@@ -5,13 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import xyz.letzcollab.backend.entity.User;
-import xyz.letzcollab.backend.entity.Workspace;
 import xyz.letzcollab.backend.global.exception.CustomException;
 import xyz.letzcollab.backend.global.exception.ErrorCode;
 import xyz.letzcollab.backend.repository.WorkspaceInvitationRepository;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Component
 @Profile("prod")
