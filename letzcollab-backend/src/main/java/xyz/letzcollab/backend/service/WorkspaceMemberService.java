@@ -16,10 +16,12 @@ import xyz.letzcollab.backend.global.email.context.WorkspaceInvitationEmailConte
 import xyz.letzcollab.backend.global.event.dto.EmailEvent;
 import xyz.letzcollab.backend.global.exception.CustomException;
 import xyz.letzcollab.backend.global.exception.ErrorCode;
+import xyz.letzcollab.backend.global.ratelimit.InvitationRateLimiter;
 import xyz.letzcollab.backend.repository.UserRepository;
 import xyz.letzcollab.backend.repository.WorkspaceInvitationRepository;
 import xyz.letzcollab.backend.repository.WorkspaceMemberRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,6 +44,7 @@ public class WorkspaceMemberService {
 	private final WorkspaceMemberRepository memberRepository;
 	private final WorkspaceInvitationRepository invitationRepository;
 	private final UserRepository userRepository;
+	private final InvitationRateLimiter invitationRateLimiter;
 
 	@Value("${frontend.base-url}")
 	private String frontendURL;
@@ -54,6 +57,8 @@ public class WorkspaceMemberService {
 
 		User inviter = requester.getUser();
 		Workspace workspace = requester.getWorkspace();
+
+		invitationRateLimiter.rateLimitInviteEmail(inviter);
 
 		WorkspaceInvitation invitation = WorkspaceInvitation.createWorkspaceInvitation(inviter, workspace, inviteeEmail, inviteePosition);
 		invitationRepository.save(invitation);
