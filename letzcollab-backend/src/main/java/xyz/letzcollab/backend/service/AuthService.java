@@ -13,7 +13,6 @@ import xyz.letzcollab.backend.dto.auth.LoginResponse;
 import xyz.letzcollab.backend.dto.auth.SignupRequest;
 import xyz.letzcollab.backend.entity.User;
 import xyz.letzcollab.backend.entity.VerificationToken;
-import xyz.letzcollab.backend.entity.vo.TokenType;
 import xyz.letzcollab.backend.global.email.context.PasswordResetEmailContext;
 import xyz.letzcollab.backend.global.email.context.VerifyEmailContext;
 import xyz.letzcollab.backend.global.event.dto.EmailEvent;
