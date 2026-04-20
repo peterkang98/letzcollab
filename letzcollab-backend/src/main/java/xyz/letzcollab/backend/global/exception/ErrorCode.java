@@ -35,6 +35,8 @@ public enum ErrorCode {
 	VERIFICATION_TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "E002", "해당 인증 토큰을 찾을 수 없습니다."),
 	VERIFICATION_TOKEN_EXPIRED(HttpStatus.GONE, "E003", "인증 토큰이 만료되었습니다."),
 	VERIFICATION_TOKEN_ALREADY_USED(HttpStatus.GONE, "E004", "이미 사용된 인증 토큰입니다."),
+	EMAIL_SEND_TOO_FREQUENT(HttpStatus.TOO_MANY_REQUESTS, "E005", "이메일 발송 요청이 너무 많습니다. 잠시 후 다시 시도해주세요."),
+	VERIFICATION_TOKEN_NOT_EXPIRED(HttpStatus.BAD_REQUEST, "E006", "아직 유효한 인증 토큰이 있습니다. 이메일을 확인해주세요."),
 
 	// --- Workspace (W) ---
 	// 보안을 위해, 권한 미달 때문에 실패했는지, 리소스가 없어서 실패했는지 정확히 알려주지 않음
