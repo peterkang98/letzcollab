@@ -1,0 +1,5 @@
+# gradle의 bootJar 먼저 실행해야 함!!
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY build/libs/*.jar app.jar
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dspring.profiles.active=local -jar app.jar"]
