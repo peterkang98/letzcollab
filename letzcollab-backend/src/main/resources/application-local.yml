@@ -5,6 +5,11 @@ spring:
     username: ${DB_USER}
     password: ${DB_PASSWORD}
 
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:sql/seed.sql
+
   h2:
     console:
       enabled: true
@@ -12,6 +17,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create
+    defer-datasource-initialization: true
 
   mail:
     properties:
