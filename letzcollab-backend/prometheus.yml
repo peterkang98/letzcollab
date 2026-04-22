@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: 'spring-boot'
+    metrics_path: 'api/actuator/prometheus'
+    static_configs:
+      - targets: ['letzcollab-backend:8080']
