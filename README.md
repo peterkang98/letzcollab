@@ -68,22 +68,25 @@
 
 ### 2.1 백엔드 라이브러리
 
-| 라이브러리             | 버전       | 용도             |
-|-------------------|----------|----------------|
-| Spring Data JPA   | 3.5.8    | ORM / DB 연동    |
-| Hibernate         | 6.6.41   | ORM 구현체        |
-| Spring Security   | 6.5.7    | 인증 / 인가        |
-| Spring Validation | 8.0.3    | 요청 데이터 검증      |
-| Spring Mail       | 2.0.5    | 이메일 발송         |
-| Thymeleaf         | 3.1.3    | 이메일 HTML 템플릿   |
-| Spring Retry      | 2.0.12   | 재시도 처리         |
-| AspectJ (AOP)     | 1.9.25.1 | AOP            |
-| QueryDSL          | 5.1.0    | 동적 쿼리          |
-| jjwt              | 0.12.6   | JWT 생성 및 검증    |
-| springdoc-openapi | 2.8.5    | Swagger UI     |
-| Lombok            | 1.18.42  | 보일러플레이트 코드 제거  |
-| p6spy             | 3.9.1    | SQL 로깅 (개발 환경) |
-| PostgreSQL Driver | 42.7.9   | DB 드라이버        |
+| 라이브러리                 | 버전       | 용도                       |
+|-----------------------|----------|--------------------------|
+| Spring Data JPA       | 3.5.8    | ORM / DB 연동              |
+| Hibernate             | 6.6.41   | ORM 구현체                  |
+| Spring Security       | 6.5.7    | 인증 / 인가                  |
+| Spring Validation     | 8.0.3    | 요청 데이터 검증                |
+| Spring Mail           | 2.0.5    | 이메일 발송                   |
+| Thymeleaf             | 3.1.3    | 이메일 HTML 템플릿             |
+| Spring Retry          | 2.0.12   | 재시도 처리                   |
+| AspectJ (AOP)         | 1.9.25.1 | AOP                      |
+| QueryDSL              | 5.1.0    | 동적 쿼리                    |
+| jjwt                  | 0.12.6   | JWT 생성 및 검증              |
+| springdoc-openapi     | 2.8.5    | Swagger UI               |
+| Lombok                | 1.18.42  | 보일러플레이트 코드 제거            |
+| p6spy                 | 3.9.1    | SQL 로깅 (개발 환경)           |
+| PostgreSQL Driver     | 42.7.9   | DB 드라이버                  |
+| Spring Actuator       | 3.5.10   | 모니터링 엔드포인트 제공            |
+| Micrometer Prometheus | 1.15.8   | 모니터링 데이터를 프로메테우스 포맷으로 변환 |
+
 
 ### 2.2 프론트엔드 라이브러리
 
@@ -125,13 +128,9 @@ DB_NAME=
 
 ```bash
 cd letzcollab-backend
-docker-compose up -d            # PostgreSQL, MailHog 컨테이너 실행
-
-export $(cat .env | xargs)      # .env 환경변수 현재 셸에 주입
-./gradlew bootRun --args='--spring.profiles.active=local'
+./gradlew bootJar
+docker compose up -d            # 스프링 부트 앱, PostgreSQL, MailHog, Prometheus, Grafana 컨테이너 실행
 ```
-
-> Windows(PowerShell)의 경우 `.env` 파일의 각 항목을 `$env:KEY=VALUE` 형식으로 직접 설정해주세요
 
 ### 3. 프론트엔드 실행
 
@@ -141,7 +140,7 @@ npm install
 npm run dev
 ```
 
-프론트엔드는 `http://localhost:5173`, 백엔드 API는 `http://localhost:8080`에서 실행됩니다.
+프론트엔드는 `http://localhost:5173`, 백엔드 API는 `http://localhost:8080/api`에서 실행됩니다.
 <br> 앱 내에서 전송한 이메일은 `http://localhost:8025`에서 확인 가능합니다.
 
 ---
