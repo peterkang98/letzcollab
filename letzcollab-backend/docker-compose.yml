@@ -10,6 +10,12 @@ services:
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    command: ["postgres", "-c", "shared_buffers=512MB"]
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
 
   # 메일 테스트 서버
   mailhog:
