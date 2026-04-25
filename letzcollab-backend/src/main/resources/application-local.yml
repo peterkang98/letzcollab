@@ -7,7 +7,8 @@ spring:
 
   sql:
     init:
-      mode: always
+      # DB에 시드 데이터 넣기 전에는 always로
+      mode: never
       data-locations: classpath:sql/seed.sql
 
   h2:
@@ -16,8 +17,9 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create
-    defer-datasource-initialization: true
+      # DB에 시드 데이터 넣기 전에는 create로, defer-datasource-initialization은 true로
+      ddl-auto: none
+    defer-datasource-initialization: false
 
   mail:
     properties:
