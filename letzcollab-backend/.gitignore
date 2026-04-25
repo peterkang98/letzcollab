@@ -37,6 +37,7 @@ out/
 .vscode/
 
 .env
+*.txt
 
 postgres_data
 .DS_Store
