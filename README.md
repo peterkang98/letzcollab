@@ -78,7 +78,7 @@
 | Thymeleaf             | 3.1.3    | 이메일 HTML 템플릿             |
 | Spring Retry          | 2.0.12   | 재시도 처리                   |
 | AspectJ (AOP)         | 1.9.25.1 | AOP                      |
-| QueryDSL              | 5.1.0    | 동적 쿼리                    |
+| OpenFeign QueryDSL    | 7.1      | 동적 쿼리                    |
 | jjwt                  | 0.12.6   | JWT 생성 및 검증              |
 | springdoc-openapi     | 2.8.5    | Swagger UI               |
 | Lombok                | 1.18.42  | 보일러플레이트 코드 제거            |
