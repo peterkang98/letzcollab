@@ -86,5 +86,7 @@ clean {
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+	useJUnitPlatform {
+        excludeTags 'data-generation'
+    }
 }
