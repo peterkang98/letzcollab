@@ -355,7 +355,7 @@ public class TaskService {
 		// 1. 상태 변경 알림
 		// 원칙: 변경을 요청한 본인(requester)은 제외, 나머지 관계자에게 발송
 		if (previousStatus != task.getStatus()) {
-			String statusMessage = String.format("'%s' 업무 상태가 %s(으)로 변경되었습니다.", task.getName(), task.getStatus());
+			String statusMessage = String.format("'%s' 업무 상태가 %s(으)로 변경되었습니다.", task.getName(), task.getStatus().getDescription());
 
 			Set<Long> statusTargets = new HashSet<>();
 
