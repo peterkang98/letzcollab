@@ -15,7 +15,7 @@
 
 > 사이드바 기능
 
-<img width="1858" alt="Image" src="https://github.com/user-attachments/assets/b3f74286-ec31-4535-83f4-40396e185dbc" />
+<img width="1644" alt="Image" src="https://github.com/user-attachments/assets/aa734aca-c256-4266-8a33-7a1938616603" />
 
 <img width="2006" alt="Image" src="https://github.com/user-attachments/assets/fb4f748a-113f-41f4-bffd-42af056350c1" />
 
@@ -769,7 +769,7 @@ letzcollab/
             │   │   ├── ProdAuthRateLimiter.java
             │   │   └── ProdInvitationRateLimiter.java
             │   ├── scheduler/
-            │   │   ├── NotificationCleanupScheduler.java     # 오래된 알림 정리
+            │   │   ├── CleanupScheduler.java     # 오래된 알림/인증 토큰/초대장 정리
             │   │   └── TaskDeadlineScheduler.java            # 업무 마감 알림 발송
             │   └── security/
             │       ├── jwt/
