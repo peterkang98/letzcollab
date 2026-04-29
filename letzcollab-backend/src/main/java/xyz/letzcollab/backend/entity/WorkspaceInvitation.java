@@ -12,7 +12,15 @@ import java.util.UUID;
 
 @Getter
 @Entity
-@Table(name = "workspace_invitations")
+@Table(
+	name = "workspace_invitations",
+	indexes = {
+		@Index(
+			name = "idx_workspace_invitations_inviter_created",
+			columnList = "inviter_id, created_at"
+		)
+	}
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
 public class WorkspaceInvitation {
