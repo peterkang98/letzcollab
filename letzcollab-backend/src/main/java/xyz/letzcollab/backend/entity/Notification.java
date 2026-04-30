@@ -19,7 +19,8 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "notifications", indexes = {
 		@Index(name = "idx_notifications_recipient_created", columnList = "recipient_id, created_at DESC"),
-		@Index(name = "idx_notifications_recipient_unread", columnList = "recipient_id, is_read")
+		@Index(name = "idx_notifications_recipient_unread", columnList = "recipient_id, is_read"),
+		@Index(name = "idx_notifications_recipient_reference_type", columnList = "recipient_id, reference_id, type")
 })
 public class Notification {
 
