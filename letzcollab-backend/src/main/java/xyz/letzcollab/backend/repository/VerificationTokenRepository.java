@@ -1,6 +1,7 @@
 package xyz.letzcollab.backend.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import xyz.letzcollab.backend.entity.VerificationToken;
@@ -20,4 +21,8 @@ public interface VerificationTokenRepository extends JpaRepository<VerificationT
 			@Param("type") TokenType type,
 			@Param("since") LocalDateTime since
 	);
+
+	@Modifying
+	@Query("DELETE FROM VerificationToken v where v.createdAt < :cutoff")
+	int deleteTokensOlderThan(@Param("cutoff") LocalDateTime cutoff);
 }

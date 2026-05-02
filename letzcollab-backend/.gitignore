@@ -38,6 +38,7 @@ out/
 
 .env
 *.txt
+http-client.private.env.json
 
 postgres_data
 .DS_Store

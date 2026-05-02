@@ -1,0 +1,22 @@
+### 02. 타 멤버 권한/직책 수정 (LEADER/ADMIN 전용)
+PATCH {{baseUrl}}/v1/workspaces/{{workspacePublicId}}/projects/{{projectPublicId}}/members/{{targetUserPublicId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "newPosition": "프론트엔드 개발자",
+  "newRole": "MEMBER"
+}
+
+### 04. 내 프로젝트 멤버 정보 조회
+GET {{baseUrl}}/v1/projects/{{projectPublicId}}/members/me
+Authorization: Bearer {{token}}
+
+### 05. 내 직책 수정
+PATCH {{baseUrl}}/v1/projects/{{projectPublicId}}/members/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "newPosition": "풀스택 개발자"
+}

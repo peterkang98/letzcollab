@@ -13,7 +13,15 @@ import java.util.UUID;
 
 @Getter
 @Entity
-@Table(name = "verification_tokens")
+@Table(
+	name = "verification_tokens",
+	indexes = {
+		@Index(
+			name = "idx_verification_tokens_user_type_created",
+			columnList = "user_id, type, created_at"
+		)
+	}
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
 public class VerificationToken {

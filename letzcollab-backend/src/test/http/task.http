@@ -1,0 +1,62 @@
+### 01. 최상위 업무 생성
+POST {{baseUrl}}/v1/projects/{{projectPublicId}}/tasks
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "테스트 업무",
+  "description": "업무 설명입니다.",
+  "status": "TODO",
+  "priority": "HIGH",
+  "assigneePublicId": "{{assigneePublicId}}",
+  "dueDate": "2026-05-31"
+}
+
+### 02. 하위 업무 생성
+POST {{baseUrl}}/v1/projects/{{projectPublicId}}/tasks
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "하위 업무",
+  "description": "하위 업무 설명입니다.",
+  "status": "TODO",
+  "priority": "MEDIUM",
+  "assigneePublicId": "{{assigneePublicId}}",
+  "dueDate": "2026-05-15",
+  "parentTaskPublicId": "{{parentTaskPublicId}}"
+}
+
+### 03. 업무 목록 조회 (페이지네이션)
+GET {{baseUrl}}/v1/projects/{{projectPublicId}}/tasks?page=0&size=20&sort=dueDate,asc
+Authorization: Bearer {{token}}
+
+### 04. 업무 목록 조회 (상태 + 우선순위 필터)
+GET {{baseUrl}}/v1/projects/{{projectPublicId}}/tasks?status=TODO&priority=HIGH&page=0&size=20
+Authorization: Bearer {{token}}
+
+### 05. 업무 목록 조회 (마감일 범위 필터)
+GET {{baseUrl}}/v1/projects/{{projectPublicId}}/tasks?dueDateFrom=2026-05-01&dueDateTo=2026-05-31&page=0&size=20
+Authorization: Bearer {{token}}
+
+### 06. 업무 목록 조회 (담당자 필터)
+GET {{baseUrl}}/v1/projects/{{projectPublicId}}/tasks?assigneePublicId={{assigneePublicId}}&page=0&size=20
+Authorization: Bearer {{token}}
+
+### 07. 업무 상세 조회
+GET {{baseUrl}}/v1/projects/{{projectPublicId}}/tasks/{{taskPublicId}}
+Authorization: Bearer {{token}}
+
+### 08. 업무 수정
+PATCH {{baseUrl}}/v1/projects/{{projectPublicId}}/tasks/{{taskPublicId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "수정된 업무명",
+  "description": "수정된 설명",
+  "status": "IN_PROGRESS",
+  "priority": "URGENT",
+  "assigneePublicId": "{{assigneePublicId}}",
+  "dueDate": "2026-06-15"
+}

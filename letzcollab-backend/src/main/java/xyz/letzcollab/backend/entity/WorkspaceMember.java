@@ -15,10 +15,18 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 @Table(
 	name = "workspace_members",
+	// 특정 유저가 속한 워크스페이스 목록 조회에 유리
 	uniqueConstraints = {
 		@UniqueConstraint(
 			name = "uk_workspace_members_member_workspace",
 			columnNames = {"member_id", "workspace_id"}
+		)
+	},
+	// 특정 워크스페이스에 속한 멤버 조회 및 검증에 유리
+	indexes = {
+		@Index(
+			name = "idx_workspace_members_workspace_member",
+			columnList = "workspace_id, member_id"
 		)
 	}
 )
