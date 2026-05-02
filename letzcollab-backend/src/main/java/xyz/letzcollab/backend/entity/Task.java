@@ -19,7 +19,27 @@ import java.util.List;
 @Getter
 @SQLRestriction("deleted_at IS NULL")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "tasks")
+@Table(
+	name = "tasks",
+	indexes = {
+		@Index(
+			name = "idx_tasks_assignee_project",
+			columnList = "assignee_id, project_id"
+		),
+		@Index(
+			name = "idx_tasks_project_id",
+			columnList = "project_id"
+		),
+		@Index(
+			name = "idx_tasks_due_date_status",
+			columnList = "due_date, status"
+		),
+		@Index(
+			name = "idx_tasks_parent",
+			columnList = "parent_task_id"
+		)
+    }
+)
 public class Task extends PublicIdAndFullAuditBaseEntity {
 
 	@Id
