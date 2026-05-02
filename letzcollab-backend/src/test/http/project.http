@@ -1,0 +1,39 @@
+### 01. 프로젝트 생성
+POST {{baseUrl}}/v1/workspaces/{{workspacePublicId}}/projects
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "테스트 프로젝트",
+  "description": "부하 테스트용 프로젝트입니다.",
+  "status": "ACTIVE",
+  "startDate": "2026-04-01",
+  "endDate": "2026-06-30",
+  "isPrivate": true
+}
+
+### 02. 프로젝트 목록 조회 (검색 조건 + 페이지네이션)
+GET {{baseUrl}}/v1/workspaces/{{workspacePublicId}}/projects?page=0&size=10&sort=createdAt,desc
+Authorization: Bearer {{token}}
+
+### 03. 프로젝트 목록 조회 (키워드 + 상태 필터)
+GET {{baseUrl}}/v1/workspaces/{{workspacePublicId}}/projects?keyword=테스트&status=ACTIVE&page=0&size=10
+Authorization: Bearer {{token}}
+
+### 04. 프로젝트 상세 조회
+GET {{baseUrl}}/v1/workspaces/{{workspacePublicId}}/projects/{{projectPublicId}}
+Authorization: Bearer {{token}}
+
+### 05. 프로젝트 정보 수정 (ADMIN 이상)
+PATCH {{baseUrl}}/v1/workspaces/{{workspacePublicId}}/projects/{{projectPublicId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "수정된 프로젝트명",
+  "description": "수정된 설명",
+  "status": "ON_HOLD",
+  "startDate": "2026-04-01",
+  "endDate": "2026-07-31",
+  "isPrivate": false
+}

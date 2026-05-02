@@ -1,0 +1,26 @@
+### 01. 워크스페이스 생성
+POST {{baseUrl}}/v1/workspaces
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "테스트 워크스페이스2",
+  "position": "테크 리드"
+}
+
+### 02. 내 워크스페이스 목록 조회
+GET {{baseUrl}}/v1/workspaces
+Authorization: Bearer {{token}}
+
+### 03. 워크스페이스 상세 조회
+GET {{baseUrl}}/v1/workspaces/{{workspacePublicId}}
+Authorization: Bearer {{token}}
+
+### 04. 워크스페이스 이름 수정
+PATCH {{baseUrl}}/v1/workspaces/{{workspacePublicId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "newName": "수정된 워크스페이스명"
+}

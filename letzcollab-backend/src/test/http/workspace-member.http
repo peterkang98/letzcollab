@@ -1,0 +1,32 @@
+### 01. 멤버 초대 이메일 발송 (관리자/소유자 전용)
+POST {{baseUrl}}/v1/workspaces/{{workspacePublicId}}/invitations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "invitee@letzcollab.xyz",
+  "position": "디자이너"
+}
+
+### 03. 내 권한/직책 조회
+GET {{baseUrl}}/v1/workspaces/{{workspacePublicId}}/members/me
+Authorization: Bearer {{token}}
+
+### 04. 내 직책 수정
+PATCH {{baseUrl}}/v1/workspaces/{{workspacePublicId}}/members/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "newPosition": "백엔드 개발자"
+}
+
+### 05. 타 멤버 권한/직책 수정 (관리자/소유자 전용)
+PATCH {{baseUrl}}/v1/workspaces/{{workspacePublicId}}/members/{{targetUserPublicId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "newPosition": "프론트엔드 개발자",
+  "newRole": "MEMBER"
+}
