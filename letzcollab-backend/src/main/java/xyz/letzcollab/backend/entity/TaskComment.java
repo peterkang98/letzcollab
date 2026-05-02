@@ -13,7 +13,18 @@ import java.util.List;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "task_comments")
+@Table(
+	name = "task_comments",
+	indexes = {
+		@Index(
+			name = "idx_task_comments_task_parent_created",
+			columnList = "task_id, parent_comment_id, created_at"
+		),
+		// childComments 조인용
+		@Index(name = "idx_task_comments_parent",
+				columnList = "parent_comment_id")
+	}
+)
 public class TaskComment extends DateBaseEntity {
 
 	@Id
