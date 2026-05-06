@@ -10,6 +10,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.letzcollab.backend.dto.auth.LoginResponse;
+import xyz.letzcollab.backend.dto.auth.RefreshResponse;
+import xyz.letzcollab.backend.dto.auth.RefreshTokenData;
 import xyz.letzcollab.backend.dto.auth.SignupRequest;
 import xyz.letzcollab.backend.entity.User;
 import xyz.letzcollab.backend.entity.VerificationToken;
@@ -17,15 +19,18 @@ import xyz.letzcollab.backend.global.email.context.PasswordResetEmailContext;
 import xyz.letzcollab.backend.global.email.context.VerifyEmailContext;
 import xyz.letzcollab.backend.global.event.dto.EmailEvent;
 import xyz.letzcollab.backend.global.exception.CustomException;
-import xyz.letzcollab.backend.global.exception.ErrorCode;
 import xyz.letzcollab.backend.global.ratelimit.AuthRateLimiter;
 import xyz.letzcollab.backend.global.security.jwt.JwtTokenProvider;
+import xyz.letzcollab.backend.global.security.jwt.RefreshTokenProvider;
 import xyz.letzcollab.backend.global.security.userdetails.CustomUserDetails;
 import xyz.letzcollab.backend.repository.UserRepository;
 import xyz.letzcollab.backend.repository.VerificationTokenRepository;
+import xyz.letzcollab.backend.repository.redis.RefreshTokenRepository;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import static xyz.letzcollab.backend.global.exception.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +44,8 @@ public class AuthService {
 	private final PasswordEncoder passwordEncoder;
 	private final AuthenticationManager authenticationManager;
 	private final JwtTokenProvider jwtTokenProvider;
+	private final RefreshTokenRepository refreshTokenRepository;
+	private final RefreshTokenProvider refreshTokenProvider;
 	private final AuthRateLimiter authRateLimiter;
 
 	@Value("${frontend.base-url}")
@@ -47,7 +54,7 @@ public class AuthService {
 	public void signup(SignupRequest req) {
 		if (userRepository.existsByEmail(req.email())) {
 			log.warn("회원가입 실패 - 이메일 중복: {}", req.email());
-			throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
+			throw new CustomException(DUPLICATE_EMAIL);
 		}
 
 		User user = User.createPendingUser(
@@ -74,11 +81,14 @@ public class AuthService {
 
 			Authentication authentication = authenticationManager.authenticate(authenticationToken);
 
-			String token = jwtTokenProvider.createToken(authentication);
+			String accessToken = jwtTokenProvider.createToken(authentication);
+			String refreshToken = refreshTokenProvider.createToken();
+
 			CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+			refreshTokenRepository.saveRefreshToken(refreshToken, RefreshTokenData.from(userDetails));
 
 			log.info("로그인 성공 - email: {}", email);
-			return new LoginResponse(token, userDetails.getName(), userDetails.getEmail());
+			return new LoginResponse(accessToken, refreshToken, userDetails.getName(), userDetails.getEmail());
 
 		} catch (BadCredentialsException e) {
 			log.warn("로그인 실패 - 이메일 또는 비밀번호 불일치: {}", email);
@@ -89,6 +99,37 @@ public class AuthService {
 		} catch (LockedException e) {
 			log.warn("로그인 실패 - 계정 잠김/탈퇴: {}", email);
 			throw e;
+		}
+	}
+
+	@Transactional(readOnly = true)
+	public RefreshResponse refresh(String oldRefreshToken) {
+		RefreshTokenData data = refreshTokenRepository.getRefreshTokenData(oldRefreshToken);
+
+		if (data == null) {
+			throw new CustomException(INVALID_REFRESH_TOKEN);
+		}
+
+		log.debug("JWT 재발급 시도 - email: {}", data.email());
+
+		String newAccessToken = jwtTokenProvider.createToken(data);
+		String newRefreshToken = refreshTokenProvider.createToken();
+
+		refreshTokenRepository.saveRefreshToken(newRefreshToken, data);
+		refreshTokenRepository.deleteRefreshToken(oldRefreshToken);
+
+		log.info("JWT 재발급 성공 - email: {}", data.email());
+		return new RefreshResponse(newAccessToken, newRefreshToken);
+	}
+
+	@Transactional(readOnly = true)
+	public void logout(String oldRefreshToken, String email) {
+		boolean deleted = refreshTokenRepository.deleteRefreshToken(oldRefreshToken);
+
+		if (deleted) {
+			log.info("로그아웃 성공 - email: {}", email);
+		} else {
+			log.info("갱신 토큰 제거 실패 - email: {}", email);
 		}
 	}
 
@@ -108,7 +149,7 @@ public class AuthService {
 		VerificationToken foundExpiredToken = tokenRepository.findByToken(expiredToken)
 															 .orElseThrow(() -> {
 																 log.warn("인증 메일 재발송 실패 - 토큰 없음: {}", expiredToken);
-																 return new CustomException(ErrorCode.VERIFICATION_TOKEN_NOT_FOUND);
+																 return new CustomException(VERIFICATION_TOKEN_NOT_FOUND);
 															 });
 
 		verifyTokenExpirationAndUsage(expiredToken, foundExpiredToken);
@@ -129,12 +170,12 @@ public class AuthService {
 		User foundUser = userRepository.findByEmail(email)
 									   .orElseThrow(() -> {
 										   log.warn("비밀번호 재설정 실패 - 존재하지 않는 이메일: {}", email);
-										   return new CustomException(ErrorCode.USER_NOT_FOUND);
+										   return new CustomException(USER_NOT_FOUND);
 									   });
 
 		if (!foundUser.getStatus().canResetPassword()) {
 			log.warn("비밀번호 재설정 실패 - 정지 또는 탈퇴 계정: {}", email);
-			throw new CustomException(ErrorCode.LOCKED);
+			throw new CustomException(LOCKED);
 		}
 
 		authRateLimiter.rateLimitResetPwdReq(email);
@@ -166,16 +207,16 @@ public class AuthService {
 		VerificationToken foundToken = tokenRepository.findByToken(token)
 													  .orElseThrow(() -> {
 														  log.warn("토큰 조회 실패 - 존재하지 않는 토큰: {}", token);
-														  return new CustomException(ErrorCode.VERIFICATION_TOKEN_NOT_FOUND);
+														  return new CustomException(VERIFICATION_TOKEN_NOT_FOUND);
 													  });
 
 		if (foundToken.getUsedAt() != null) {
 			log.warn("토큰 검증 실패 - 이미 사용된 토큰: {}", token);
-			throw new CustomException(ErrorCode.VERIFICATION_TOKEN_ALREADY_USED);
+			throw new CustomException(VERIFICATION_TOKEN_ALREADY_USED);
 		}
 		if (foundToken.isExpired()) {
 			log.warn("토큰 검증 실패 - 만료된 토큰: {}", token);
-			throw new CustomException(ErrorCode.VERIFICATION_TOKEN_EXPIRED);
+			throw new CustomException(VERIFICATION_TOKEN_EXPIRED);
 		}
 		return foundToken;
 	}
@@ -188,9 +229,9 @@ public class AuthService {
 	private void verifyTokenExpirationAndUsage(UUID expiredToken, VerificationToken foundExpiredToken) {
 		if (foundExpiredToken.getUsedAt() != null) {
 			log.warn("인증 메일 재발송 실패 - 이미 사용된 토큰: {}", expiredToken);
-			throw new CustomException(ErrorCode.VERIFICATION_TOKEN_ALREADY_USED);
+			throw new CustomException(VERIFICATION_TOKEN_ALREADY_USED);
 		} else if (foundExpiredToken.getExpiresAt().isAfter(LocalDateTime.now().plusMinutes(4))) {
-			throw new CustomException(ErrorCode.VERIFICATION_TOKEN_NOT_EXPIRED);
+			throw new CustomException(VERIFICATION_TOKEN_NOT_EXPIRED);
 		}
 	}
 }
