@@ -9,6 +9,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
+import xyz.letzcollab.backend.dto.auth.RefreshTokenData;
 import xyz.letzcollab.backend.entity.vo.UserRole;
 import xyz.letzcollab.backend.global.security.userdetails.CustomUserDetails;
 
@@ -45,6 +46,20 @@ public class JwtTokenProvider {
 				   .subject(publicId)
 				   .claim("email", email)
 				   .claim("role", role)
+				   .issuedAt(now)
+				   .expiration(expiryDate)
+				   .signWith(key)
+				   .compact();
+	}
+
+	public String createToken(RefreshTokenData data) {
+		Date now = new Date();
+		Date expiryDate = new Date(now.getTime() + accessTokenValidityInMs);
+
+		return Jwts.builder()
+				   .subject(data.publicId())
+				   .claim("email", data.email())
+				   .claim("role", data.role())
 				   .issuedAt(now)
 				   .expiration(expiryDate)
 				   .signWith(key)
