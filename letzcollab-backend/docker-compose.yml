@@ -11,6 +11,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     command: ["postgres", "-c", "shared_buffers=512MB"]
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     deploy:
       resources:
         limits:
@@ -34,7 +39,10 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
     environment:
       - JAVA_OPTS=-Xms512m -Xmx512m  # JVM 힙 메모리 제한
       - SPRING_DATASOURCE_URL=jdbc:postgresql://letzcollab-db:5432/letzcollab_db
@@ -45,6 +53,17 @@ services:
         limits:
           cpus: '2'
           memory: 1G
+
+  redis:
+    image: redis:7-alpine
+    container_name: letzcollab-redis
+    ports:
+      - "6379:6379"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
 
   prometheus:
     image: prom/prometheus:latest
