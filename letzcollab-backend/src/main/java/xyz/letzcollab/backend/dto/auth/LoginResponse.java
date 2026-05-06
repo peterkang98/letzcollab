@@ -9,6 +9,9 @@ public record LoginResponse(
 	@Schema(description = "발급된 JWT 액세스 토큰 (모바일용. 웹일 경우 null)", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
 	String accessToken,
 
+	@Schema(description = "발급된 갱신 토큰 (모바일용. 웹일 경우 null)", example = "tVToUCQ93PR_CAUx4lJxhq7r...")
+	String refreshToken,
+
 	@Schema(description = "사용자 이름", example = "홍길동")
 	String name,
 
@@ -16,6 +19,6 @@ public record LoginResponse(
 	String email
 ) {
 	public LoginResponse withoutToken() {
-		return new LoginResponse(null, this.name, this.email);
+		return new LoginResponse(null, null, this.name, this.email);
 	}
 }

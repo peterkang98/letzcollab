@@ -10,10 +10,17 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.event.ApplicationEvents;
 import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.transaction.annotation.Transactional;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 import xyz.letzcollab.backend.dto.auth.LoginResponse;
+import xyz.letzcollab.backend.dto.auth.RefreshResponse;
+import xyz.letzcollab.backend.dto.auth.RefreshTokenData;
 import xyz.letzcollab.backend.dto.auth.SignupRequest;
 import xyz.letzcollab.backend.entity.User;
 import xyz.letzcollab.backend.entity.VerificationToken;
@@ -23,8 +30,10 @@ import xyz.letzcollab.backend.entity.vo.UserStatus;
 import xyz.letzcollab.backend.global.event.dto.EmailEvent;
 import xyz.letzcollab.backend.global.exception.CustomException;
 import xyz.letzcollab.backend.global.exception.ErrorCode;
+import xyz.letzcollab.backend.global.security.jwt.RefreshTokenProvider;
 import xyz.letzcollab.backend.repository.UserRepository;
 import xyz.letzcollab.backend.repository.VerificationTokenRepository;
+import xyz.letzcollab.backend.repository.redis.RefreshTokenRepository;
 
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
@@ -33,12 +42,14 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
 @DisplayName("AuthService 통합 테스트")
 @RecordApplicationEvents
+@Testcontainers
 class AuthServiceTest {
 
 	@Autowired
@@ -51,10 +62,25 @@ class AuthServiceTest {
 	private VerificationTokenRepository tokenRepository;
 
 	@Autowired
+	private RefreshTokenRepository refreshTokenRepository;
+
+	@Autowired
+	private RefreshTokenProvider refreshTokenProvider;
+
+	@Container
+	private static GenericContainer<?> redis = new GenericContainer<>("redis:7-alpine").withExposedPorts(6379);
+
+	@Autowired
 	private PasswordEncoder passwordEncoder;
 
 	@Autowired
 	private ApplicationEvents events;
+
+	@DynamicPropertySource
+	private static void redisProperties(DynamicPropertyRegistry registry) {
+		registry.add("spring.data.redis.host", redis::getHost);
+		registry.add("spring.data.redis.port", redis::getFirstMappedPort);
+	}
 
 	private SignupRequest createSignupRequest(String email) {
 		return new SignupRequest("홍길동", email, "Password1!", "010-1234-5678");
@@ -157,6 +183,9 @@ class AuthServiceTest {
 			assertThat(response.email()).isEqualTo("user@example.com");
 			assertThat(response.name()).isEqualTo("홍길동");
 			assertThat(response.accessToken()).isNotBlank();
+			assertThat(response.refreshToken()).isNotBlank();
+
+			assertThat(refreshTokenRepository.getRefreshTokenData(response.refreshToken())).isNotNull();
 		}
 
 		@Test
@@ -189,6 +218,91 @@ class AuthServiceTest {
 			// when & then
 			assertThatThrownBy(() -> authService.login("user@example.com", "Password1!"))
 					.isInstanceOf(BadCredentialsException.class);
+		}
+	}
+
+	@Nested
+	@DisplayName("JWT 재발급")
+	class Refresh {
+
+		@Test
+		@DisplayName("유효한 갱신 토큰으로 재발급 시 새로운 accessToken과 refreshToken이 반환되고 기존 토큰은 삭제된다")
+		void refresh_success() {
+			// given
+			User user = saveActiveUser("refresh@example.com");
+			String oldRefreshToken = refreshTokenProvider.createToken();
+			RefreshTokenData data = new RefreshTokenData(
+					user.getPublicId().toString(),
+					user.getEmail(),
+					user.getRole().getAuthority()
+			);
+			refreshTokenRepository.saveRefreshToken(oldRefreshToken, data);
+
+			// when
+			RefreshResponse response = authService.refresh(oldRefreshToken);
+
+			// then
+			assertThat(response.accessToken()).isNotNull();
+			assertThat(response.refreshToken()).isNotNull();
+			assertThat(response.refreshToken()).isNotEqualTo(oldRefreshToken);
+
+			assertThat(refreshTokenRepository.getRefreshTokenData(oldRefreshToken)).isNull();
+			assertThat(refreshTokenRepository.getRefreshTokenData(response.refreshToken())).isNotNull();
+		}
+
+		@Test
+		@DisplayName("존재하지 않는 갱신 토큰으로 재발급 시 INVALID_REFRESH_TOKEN 예외가 발생한다")
+		void refresh_invalidToken_throwsException() {
+			// given
+			String fakeToken = "invalid-token";
+
+			// when & then
+			assertThatThrownBy(() -> authService.refresh(fakeToken))
+					.isInstanceOf(CustomException.class)
+					.satisfies(ex -> assertThat(((CustomException) ex).getErrorCode())
+							.isEqualTo(ErrorCode.INVALID_REFRESH_TOKEN));
+		}
+
+		@Test
+		@DisplayName("null 갱신 토큰으로 재발급 시 INVALID_REFRESH_TOKEN 예외가 발생한다")
+		void refresh_nullToken_throwsException() {
+			assertThatThrownBy(() -> authService.refresh(null))
+					.isInstanceOf(CustomException.class)
+					.satisfies(ex -> assertThat(((CustomException) ex).getErrorCode())
+							.isEqualTo(ErrorCode.INVALID_REFRESH_TOKEN));
+		}
+	}
+
+	@Nested
+	@DisplayName("로그아웃")
+	class Logout {
+
+		@Test
+		@DisplayName("유효한 갱신 토큰으로 로그아웃 시 Redis에서 토큰이 삭제된다")
+		void logout_success() {
+			// given
+			User user = saveActiveUser("logout@example.com");
+			String refreshToken = refreshTokenProvider.createToken();
+			RefreshTokenData data = new RefreshTokenData(
+					user.getPublicId().toString(),
+					user.getEmail(),
+					user.getRole().getAuthority()
+			);
+			refreshTokenRepository.saveRefreshToken(refreshToken, data);
+
+			// when
+			authService.logout(refreshToken, user.getEmail());
+
+			// then
+			assertThat(refreshTokenRepository.getRefreshTokenData(refreshToken)).isNull();
+		}
+
+		@Test
+		@DisplayName("존재하지 않는 갱신 토큰으로 로그아웃 시 예외 없이 정상 처리된다")
+		void logout_invalidToken_noException() {
+			// when & then
+			assertThatCode(() -> authService.logout("nonexistent-token", "any@example.com"))
+					.doesNotThrowAnyException();
 		}
 	}
 

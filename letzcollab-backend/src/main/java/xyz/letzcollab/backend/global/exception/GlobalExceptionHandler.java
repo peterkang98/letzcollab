@@ -1,6 +1,7 @@
 package xyz.letzcollab.backend.global.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -77,6 +78,14 @@ public class GlobalExceptionHandler {
 		log.warn("메소드 인자 타입 불일치: {} - {}", e.getName(), e.getValue());
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 							 .body(ApiResponse.fail(ErrorCode.INVALID_TYPE_VALUE));
+	}
+
+	// DB/Redis 서버 연결 실패 또는 타임아웃
+	@ExceptionHandler(DataAccessException.class)
+	public ResponseEntity<ApiResponse<Void>> handleDataAccessException(DataAccessException e) {
+		log.error("데이터 저장소 오류 발생: {}", e.getMessage(), e);
+		return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+							 .body(ApiResponse.fail(ErrorCode.DAO_ERROR));
 	}
 
 	// 그 외 예상치 못한 모든 예외

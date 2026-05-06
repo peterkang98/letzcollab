@@ -9,6 +9,11 @@ services:
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - letzcollab-net
 
@@ -17,10 +22,21 @@ services:
     container_name: letzcollab-backend
     restart: always
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
     env_file:
       # secrets.ENV_FILE
       - .env
+    networks:
+      - letzcollab-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: letzcollab-redis
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD}
     networks:
       - letzcollab-net
 

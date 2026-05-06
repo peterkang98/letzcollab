@@ -32,6 +32,7 @@ frontend:
 jwt:
   secret: ${JWT_ENC_KEY}
   access-validity-in-ms: ${JWT_ACCESS_EXP_TIME}
+  refresh-validity-in-days: ${JWT_REFRESH_EXP_TIME}
 
 springdoc:
   swagger-ui:
