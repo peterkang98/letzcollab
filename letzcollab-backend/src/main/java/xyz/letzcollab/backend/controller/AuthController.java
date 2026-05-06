@@ -4,14 +4,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import xyz.letzcollab.backend.dto.auth.*;
 import xyz.letzcollab.backend.global.dto.ApiResponse;
+import xyz.letzcollab.backend.global.security.userdetails.CustomUserDetails;
 import xyz.letzcollab.backend.service.AuthService;
 
 import java.net.URI;
@@ -21,11 +22,17 @@ import java.net.URI;
 @RequestMapping("/v1/auth")
 public class AuthController {
 	private final AuthService authService;
-	private final boolean cookieSecure;
+	private final long jwtAccessValidityInMs;
+	private final long jwtRefreshValidityInDays;
 
-	public AuthController(AuthService authService, @Value("${cookie.secure}") boolean cookieSecure) {
+	public AuthController(
+			AuthService authService,
+			@Value("${jwt.access-validity-in-ms}") long jwtAccessValidityInMs,
+			@Value("${jwt.refresh-validity-in-days}") long jwtRefreshValidityInDays
+	) {
 		this.authService = authService;
-		this.cookieSecure = cookieSecure;
+		this.jwtAccessValidityInMs = jwtAccessValidityInMs;
+		this.jwtRefreshValidityInDays = jwtRefreshValidityInDays;
 	}
 
 	@Operation(summary = "회원가입", description = "새로운 사용자를 등록합니다. 30분 이내에 이메일 인증을 완료해야 로그인이 가능합니다.")
@@ -50,16 +57,7 @@ public class AuthController {
 
 		// 1. 웹 브라우저인 경우 JWT를 쿠키로만 전송
 		if ("web".equalsIgnoreCase(clientType)) {
-			ResponseCookie cookie = ResponseCookie.from("accessToken", loginResponse.accessToken())
-												  .httpOnly(true)	// XSS 방지(JS에서 접근 불가)
-												  .secure(cookieSecure)
-												  .path("/")
-												  .maxAge(60 * 30)
-												  .sameSite("Lax")	// CSRF 방지
-												  .build();
-
-			httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-
+			setCookies(httpServletResponse, loginResponse.accessToken(), loginResponse.refreshToken());
 			return ResponseEntity.ok(ApiResponse.success(loginResponse.withoutToken(), "로그인 성공!"));
 		}
 
@@ -67,24 +65,47 @@ public class AuthController {
 		return ResponseEntity.ok(ApiResponse.success(loginResponse, "로그인 성공!"));
 	}
 
-	/**
-	 *
-	 * (웹 프론트 전용)
-	 * 브라우저에서 JWT 쿠키를 없애고 싶을 때 호출
-	 */
-	@Operation(summary = "로그아웃", description = "웹 브라우저의 JWT 쿠키를 만료시켜 로그아웃 처리합니다.")
+	@Operation(
+			summary = "JWT 재발급",
+			description = "JWT와 갱신 토큰을 새로 발급합니다.<br>웹 프론트엔드는 `X-Client-Type: web` 헤더 전송 시 HttpOnly 쿠키가 자동 세팅됩니다."
+	)
+	@PostMapping("/refresh")
+	public ResponseEntity<ApiResponse<RefreshResponse>> refresh(
+			@RequestBody(required = false) RefreshRequest req,
+			@CookieValue(name = "refreshToken", required = false) String refreshToken,
+			@RequestHeader(value = "X-Client-Type", defaultValue = "web") String clientType,
+			HttpServletResponse httpServletResponse
+	) {
+		RefreshResponse res;
+
+		if ("web".equalsIgnoreCase(clientType)) {
+			res = authService.refresh(refreshToken);
+			setCookies(httpServletResponse, res.accessToken(), res.refreshToken());
+			return ResponseEntity.ok(ApiResponse.success(res.withoutToken(), "JWT 재발급 성공!"));
+		}
+
+		res = authService.refresh(req.refreshToken());
+		return ResponseEntity.ok(ApiResponse.success(res, "JWT 재발급 성공!"));
+	}
+
+	@Operation(summary = "로그아웃", description = "웹 브라우저인 경우 JWT/갱신 토큰 쿠키를 만료시키고, 모바일인 경우 갱신 토큰을 redis에서 제거하여 로그아웃 처리합니다.")
 	@PostMapping("/logout")
-	public ResponseEntity<ApiResponse<Void>> logout(HttpServletResponse httpServletResponse) {
+	public ResponseEntity<ApiResponse<Void>> logout(
+			@AuthenticationPrincipal CustomUserDetails userDetails,
+			@RequestBody(required = false) LogoutRequest req,
+			@CookieValue(name = "refreshToken", required = false) String refreshToken,
+			@RequestHeader(value = "X-Client-Type", defaultValue = "web") String clientType,
+			HttpServletResponse httpServletResponse
+	) {
+		String userEmail = userDetails.getEmail();
 
-		ResponseCookie cookie = ResponseCookie.from("accessToken", "")
-											  .httpOnly(true)
-											  .secure(cookieSecure)
-											  .path("/")
-											  .maxAge(0)
-											  .sameSite("Lax")
-											  .build();
+		if ("web".equalsIgnoreCase(clientType)) {
+			authService.logout(refreshToken, userEmail);
+			removeCookies(httpServletResponse);
+		} else {
+			authService.logout(req.refreshToken(), userEmail);
+		}
 
-		httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 		return ResponseEntity.ok(ApiResponse.success("로그아웃 성공!"));
 	}
 
@@ -116,5 +137,32 @@ public class AuthController {
 	public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody PasswordResetRequest req) {
 		authService.resetPassword(req.token(), req.newPassword());
 		return ResponseEntity.ok(ApiResponse.success("비밀번호 초기화 성공!"));
+	}
+
+
+	// 헬퍼
+	private ResponseCookie getTokenCookie(boolean isAccessToken, String cookieVal, long maxAge) {
+		String cookieName = isAccessToken ? "accessToken" : "refreshToken";
+
+		return ResponseCookie.from(cookieName, cookieVal)
+							 .httpOnly(true)    // XSS 방지(JS에서 접근 불가)
+							 .path("/")
+							 .maxAge(maxAge)
+							 .sameSite("Lax")    // CSRF 방지 (같은 사이트 + 외부에서 링크 클릭으로 이동만 허용)
+							 .build();
+	}
+
+	private void setCookies(HttpServletResponse httpServletResponse, String accessToken, String refreshToken) {
+		ResponseCookie accessTokenCookie = getTokenCookie(true, accessToken, jwtAccessValidityInMs/1000);
+		ResponseCookie refreshTokenCookie = getTokenCookie(false, refreshToken, jwtRefreshValidityInDays * 86400);
+		httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
+		httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
+	}
+
+	private void removeCookies(HttpServletResponse httpServletResponse) {
+		ResponseCookie accessTokenCookie = getTokenCookie(true, "", 0);
+		ResponseCookie refreshTokenCookie = getTokenCookie(false, "", 0);
+		httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
+		httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
 	}
 }
