@@ -60,7 +60,7 @@
 |----------|--------------------------------------------|
 | Backend  | Java 21, Spring Boot 3.5                   |
 | Frontend | React 19.2, Vite 7.3                       |
-| Database | PostgreSQL                                 |
+| Database | PostgreSQL, Redis                          |
 | Email    | Postfix (운영 환경), MailHog (테스트용 가짜 SMTP 서버) |
 | Infra    | Naver Cloud Platform, Docker, NGINX        |
 | SSL      | Let's Encrypt / Certbot                    |
@@ -70,7 +70,8 @@
 
 | 라이브러리                 | 버전       | 용도                       |
 |-----------------------|----------|--------------------------|
-| Spring Data JPA       | 3.5.8    | ORM / DB 연동              |
+| Spring Data JPA       | 3.5.10   | ORM / DB 연동              |
+| Spring Data Redis     | 3.5.10   | Redis 연동                 |
 | Hibernate             | 6.6.41   | ORM 구현체                  |
 | Spring Security       | 6.5.7    | 인증 / 인가                  |
 | Spring Validation     | 8.0.3    | 요청 데이터 검증                |
@@ -116,12 +117,16 @@
 ```env
 # JWT 설정 
 JWT_ENC_KEY= (Base64 인코딩된 시크릿 키, 길이는 256비트 이상)
-JWT_ACCESS_EXP_TIME= (ms로 유효기간 설정)
+JWT_ACCESS_EXP_TIME= (JWT 유효기간(ms) 설정)
+JWT_REFRESH_EXP_TIME= (갱신 토큰 유효기간(일수) 설정)
 
 # PostgreSQL 계정
 DB_USER=
 DB_PASSWORD=
 DB_NAME=
+
+# Redis 비번 (운영 환경에만 필요)
+REDIS_PASSWORD=
 ```
 
 #### 2. 백엔드 실행
@@ -129,7 +134,7 @@ DB_NAME=
 ```bash
 cd letzcollab-backend
 ./gradlew bootJar
-docker compose up -d            # 스프링 부트 앱, PostgreSQL, MailHog, Prometheus, Grafana 컨테이너 실행
+docker compose up -d     # 스프링 부트 앱, PostgreSQL, Redis, MailHog, Prometheus, Grafana 컨테이너 실행
 ```
 
 ### 3. 프론트엔드 실행
@@ -149,7 +154,7 @@ npm run dev
 
 ### 3.1. 아키텍처 다이어그램
 
-<img width="1594" alt="Image" src="https://github.com/user-attachments/assets/85281081-1adf-412f-8ba6-fd80178ac5c5" />
+<img width="1666" alt="Image" src="https://github.com/user-attachments/assets/64f028fe-46b9-43b8-9ec6-69ddd6ac281f" />
 
 - NGINX를 리버스 프록시로 설정하여, 리액트 정적 파일 서빙과 `/api/*` 백엔드 라우팅을 분리
 - Let's Encrypt + Certbot으로 SSL 인증서를 발급하여 NGINX 서버에 HTTPS를 적용
@@ -267,26 +272,29 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 1. **웹/모바일 듀얼 클라이언트 인증 전략**
     - **로그인 시** : `X-Client-Type` 헤더 값에 따라 JWT 전달 방식 분기
-        - `web` → `HttpOnly` + `SameSite=Lax` + `Secure` 쿠키로 전달 (React 대응)
+        - `web` → `HttpOnly` + `SameSite=Lax` 쿠키로 전달 (React 대응)
             - JS 접근 차단(XSS 방어), CSRF 방어, HTTPS 환경에서만 전송
         - 그 외 → 응답 본문으로 전달 (모바일 앱 대응)
     - **로그인 후** : 요청마다 클라이언트 유형에 맞는 방식으로 JWT 전달
-        - `web` → 브라우저가 쿠키(`accessToken`)를 자동으로 요청에 포함
+        - `web` → 브라우저가 쿠키(`accessToken`, `refreshToken`)를 자동으로 요청에 포함
         - 그 외 → `Authorization: Bearer ...` 헤더로 전달
 
-2. **커스텀 Security 컴포넌트 (`JwtAuthenticationEntryPoint`, `AuthErrorHandler`)**
+2. **Refresh Token Rotation 기반 이중 토큰 인증**
+    - Access Token(15분) + Refresh Token(14일) 이중 토큰 구조로 개선
+    - Refresh Token은 `SecureRandom` + Base64 URL-safe 인코딩으로 생성
+    - Redis에 `RT:{token}` 키로 해당 사용자의 `publicId`, `email`, `role`을 JSON 형태로 저장
+      - TTL 자동 만료로 별도 스케줄러 불필요
+      - Access Token 재발급 시 JWT를 만드는 데 필요한 정보가 전부 Redis에 있으므로 DB 조회 없이 새로운 JWT 발급 가능 → DB 부하 최소화
+    - 갱신 시 Rotation 적용: 기존 갱신 토큰 즉시 폐기 + 새 토큰 발급 → 탈취된 토큰 재사용 차단
+
+3. **커스텀 Security 컴포넌트 (`JwtAuthenticationEntryPoint`, `AuthErrorHandler`)**
     - Spring Security 기본 설정은 미인증 요청 시 403을 반환하는데, REST API에서는 401이 맞으므로 `AuthenticationEntryPoint`를 직접 구현해 필터 체인에 등록
     - JWT 예외(`JwtException` 등)는 `DispatcherServlet` 앞단의 필터 계층에서 발생하기 때문에 `@RestControllerAdvice`가 잡지 못함
     - 두 경우 모두 `AuthErrorHandler`를 통해 `HttpServletResponse`에 공통 `ApiResponse<T>` JSON을 직접 출력하여 일관된 에러 응답 형식 유지
 
-3. **DB 조회 없는 인증 복원**
+4. **DB 조회 없는 인증 복원**
     - JWT 클레임(`publicId`, `email`, `role`)을 파싱해 `CustomUserDetails` 객체를 즉시 생성
     - `CustomUserDetailsService`(DB 조회)는 로그인 최초 자격증명 검증 시에만 호출 → 매 요청마다 발생하던 불필요한 DB 쿼리 제거
-
-4. **`UserStatus` enum 기반 계정 상태 관리**
-    - `ACTIVE`, `PENDING`(이메일 미인증), `BANNED`, `DELETED` 4가지 상태를 enum으로 관리
-    - 각 상태마다 `enabled`, `notLocked` boolean 필드 값을 조합하여 `CustomUserDetails`의 `isEnabled()`, `isAccountNonLocked()` 메소드를
-      구현
 
 5. **Custom AuditorAware**
     - `SecurityContextHolder`에서 현재 사용자의 `publicId`(UUID)를 꺼내 `@CreatedBy`, `@LastModifiedBy`에 자동 기록
@@ -374,6 +382,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 |------|--------------------------------|-----------------|----|
 | POST | `/auth/signup`                 | 회원가입            | ❌  |
 | POST | `/auth/login`                  | 로그인             | ❌  |
+| POST | `/auth/refresh`                | JWT 재발급         | ❌  |
 | POST | `/auth/logout`                 | 로그아웃            | 🔒 |
 | POST | `/auth/verify-email`           | 이메일 인증          | ❌  |
 | POST | `/auth/verify-email/resend`    | 이메일 인증 재발송      | ❌  |
@@ -636,7 +645,9 @@ letzcollab/
             │   ├── TaskCommentService.java
             │   ├── NotificationService.java
             │   └── MyService.java                  # 내 업무 조회 서비스
-            ├── repository/              # Spring Data JPA + QueryDSL
+            ├── repository/              # JPA + QueryDSL + Redis
+            │   ├── redis/
+            │   │   └── RefreshTokenRepository.java  # (Key -> 갱신 토큰, Value -> JWT를 재발급하는 데 필요한 사용자 정보)
             │   ├── UserRepository.java
             │   ├── VerificationTokenRepository.java
             │   ├── WorkspaceRepository.java
@@ -678,6 +689,10 @@ letzcollab/
             │   │   ├── SignupRequest.java
             │   │   ├── LoginRequest.java
             │   │   ├── LoginResponse.java
+            │   │   ├── RefreshRequest.java
+            │   │   ├── RefreshResponse.java
+            │   │   ├── RefreshTokenData.java
+            │   │   ├── LogoutRequest.java
             │   │   ├── EmailVerificationRequest.java
             │   │   ├── ResendEmailVerificationRequest.java
             │   │   ├── PasswordResetEmailRequest.java
@@ -775,7 +790,8 @@ letzcollab/
             │       ├── jwt/
             │       │   ├── JwtAuthenticationEntryPoint.java  # 미인증 요청 진입 시 401 응답 처리
             │       │   ├── JwtAuthenticationFilter.java      # 요청마다 쿠키 또는 헤더에서 JWT 추출 및 인증 처리
-            │       │   └── JwtTokenProvider.java             # JWT 생성/파싱/Authentication 객체 반환
+            │       │   ├── JwtTokenProvider.java             # JWT 생성/파싱/Authentication 객체 반환
+            │       │   └── RefreshTokenProvider.java
             │       ├── userdetails/
             │       │   ├── CustomUserDetails.java
             │       │   └── CustomUserDetailsService.java
