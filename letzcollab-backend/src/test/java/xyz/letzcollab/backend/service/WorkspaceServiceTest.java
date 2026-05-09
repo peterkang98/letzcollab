@@ -12,15 +12,15 @@ import org.springframework.transaction.annotation.Transactional;
 import xyz.letzcollab.backend.TestAuditConfig;
 import xyz.letzcollab.backend.dto.workspace.WorkspaceDetailsResponse;
 import xyz.letzcollab.backend.dto.workspace.WorkspaceResponse;
-import xyz.letzcollab.backend.entity.User;
-import xyz.letzcollab.backend.entity.Workspace;
-import xyz.letzcollab.backend.entity.WorkspaceMember;
+import xyz.letzcollab.backend.dto.workspace.WorkspaceStatsResponse;
+import xyz.letzcollab.backend.entity.*;
+import xyz.letzcollab.backend.entity.vo.ProjectStatus;
+import xyz.letzcollab.backend.entity.vo.TaskPriority;
 import xyz.letzcollab.backend.entity.vo.WorkspaceRole;
 import xyz.letzcollab.backend.global.exception.CustomException;
-import xyz.letzcollab.backend.repository.UserRepository;
-import xyz.letzcollab.backend.repository.WorkspaceMemberRepository;
-import xyz.letzcollab.backend.repository.WorkspaceRepository;
+import xyz.letzcollab.backend.repository.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,6 +44,12 @@ class WorkspaceServiceTest {
 
 	@Autowired
 	WorkspaceMemberRepository workspaceMemberRepository;
+
+	@Autowired
+	ProjectRepository projectRepository;
+
+	@Autowired
+	TaskRepository taskRepository;
 
 	private User owner;
 	private User otherUser;
@@ -273,6 +279,58 @@ class WorkspaceServiceTest {
 					.isInstanceOf(CustomException.class)
 					.extracting(e -> ((CustomException) e).getErrorCode())
 					.isEqualTo(WORKSPACE_NOT_FOUND_OR_ACCESS_DENIED);
+		}
+	}
+
+	@Nested
+	@DisplayName("워크스페이스 통계 조회")
+	class GetWorkspaceStats {
+		@Test
+		@DisplayName("워크스페이스에 멤버 1명, 프로젝트 2개, 각 프로젝트에 업무 3개 있을 때 올바른 통계를 반환한다")
+		void getsCorrectStats() {
+			// given
+			Workspace workspace = Workspace.createWorkspace("우아한동네 개발팀", owner, "CTO");
+			workspaceRepository.save(workspace);
+			workspaceMemberRepository.save(WorkspaceMember.createGeneralMember(otherUser, workspace, "디자이너"));
+
+			for (int i = 0; i < 2; i++) {
+				Project project = Project.createProject(
+						workspace, "프로젝트" + i, "", ProjectStatus.ACTIVE, LocalDate.now(),
+						LocalDate.now().plusDays(i), false, owner, "CTO"
+				);
+				projectRepository.save(project);
+
+				for (int j = 0; j < 3; j++) {
+					// TODO 상태인 업무를 3개 생성
+					Task task = Task.createTask(
+							project, "업무" + i, "", otherUser, TaskPriority.values()[i], null,
+							owner, LocalDate.now().plusDays(30)
+					);
+					taskRepository.save(task);
+				}
+			}
+
+			// when
+			WorkspaceStatsResponse stats = workspaceService.getStats(owner.getPublicId(), workspace.getPublicId());
+
+			// then
+			assertThat(stats.projects().total()).isEqualTo(2);
+			assertThat(stats.projects().planned()).isEqualTo(0);
+			assertThat(stats.projects().active()).isEqualTo(2);
+			assertThat(stats.projects().onHold()).isEqualTo(0);
+			assertThat(stats.projects().completed()).isEqualTo(0);
+			assertThat(stats.projects().archived()).isEqualTo(0);
+
+			assertThat(stats.tasks().total()).isEqualTo(6);
+			assertThat(stats.tasks().todo()).isEqualTo(6);
+			assertThat(stats.tasks().inProgress()).isEqualTo(0);
+			assertThat(stats.tasks().inReview()).isEqualTo(0);
+			assertThat(stats.tasks().done()).isEqualTo(0);
+			assertThat(stats.tasks().cancelled()).isEqualTo(0);
+			assertThat(stats.tasks().overdue()).isEqualTo(0);
+			assertThat(stats.tasks().completionRate()).isEqualTo(0);
+
+			assertThat(stats.totalMembers()).isEqualTo(2);
 		}
 	}
 
