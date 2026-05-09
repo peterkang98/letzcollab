@@ -24,3 +24,7 @@ Content-Type: application/json
 {
   "newName": "수정된 워크스페이스명"
 }
+
+### 05. 워크스페이스 통계 조회
+GET {{baseUrl}}/v1/workspaces/{{workspacePublicId}}/stats
+Authorization: Bearer {{token}}
