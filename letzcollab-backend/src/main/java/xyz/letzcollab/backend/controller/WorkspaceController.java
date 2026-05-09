@@ -8,10 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import xyz.letzcollab.backend.dto.workspace.CreateWorkspaceRequest;
-import xyz.letzcollab.backend.dto.workspace.UpdateWorkspaceRequest;
-import xyz.letzcollab.backend.dto.workspace.WorkspaceDetailsResponse;
-import xyz.letzcollab.backend.dto.workspace.WorkspaceResponse;
+import xyz.letzcollab.backend.dto.workspace.*;
 import xyz.letzcollab.backend.global.dto.ApiResponse;
 import xyz.letzcollab.backend.global.security.userdetails.CustomUserDetails;
 import xyz.letzcollab.backend.service.WorkspaceService;
@@ -96,5 +93,18 @@ public class WorkspaceController {
 	) {
 		workspaceService.deleteWorkspace(userDetails.getPublicId(), workspacePublicId);
 		return ResponseEntity.ok(ApiResponse.success("워크스페이스 삭제 성공!"));
+	}
+
+	@Operation(
+			summary = "워크스페이스 통계 조회",
+			description = "워크스페이스의 프로젝트/업무/멤버 통계를 조회합니다. (워크스페이스 멤버 전원 가능, 비공개 프로젝트도 통계 데이터에는 들어감)"
+	)
+	@GetMapping("/{workspacePublicId}/stats")
+	public ResponseEntity<ApiResponse<WorkspaceStatsResponse>> getWorkspaceStats(
+			@AuthenticationPrincipal CustomUserDetails userDetails,
+			@PathVariable UUID workspacePublicId
+	) {
+		WorkspaceStatsResponse response = workspaceService.getStats(userDetails.getPublicId(), workspacePublicId);
+		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 }
