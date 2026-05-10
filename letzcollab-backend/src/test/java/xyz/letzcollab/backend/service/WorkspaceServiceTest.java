@@ -303,7 +303,7 @@ class WorkspaceServiceTest {
 				for (int j = 0; j < 3; j++) {
 					// TODO 상태인 업무를 3개 생성
 					Task task = Task.createTask(
-							project, "업무" + i, "", otherUser, TaskPriority.values()[i], null,
+							project, "업무" + i, "", otherUser, TaskPriority.values()[j], null,
 							owner, LocalDate.now().plusDays(30)
 					);
 					taskRepository.save(task);
