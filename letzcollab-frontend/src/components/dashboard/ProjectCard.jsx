@@ -8,7 +8,7 @@ export default function ProjectCard({ project }) {
   const status = PROJECT_STATUS_CONFIG[project.status] ?? { color: 'default', label: project.status };
 
   return (
-    <Card size="small" hoverable styles={{ body: { padding: '14px 16px' } }}>
+    <Card size="small" variant={"borderless"} hoverable styles={{ body: { padding: '14px 16px' } }}>
       <Flex vertical gap={8}>
 
         <Flex justify="space-between" align="flex-start" gap={8}>

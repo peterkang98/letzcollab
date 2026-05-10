@@ -4,16 +4,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import xyz.letzcollab.backend.dto.workspace.WorkspaceDetailsResponse;
-import xyz.letzcollab.backend.dto.workspace.WorkspaceResponse;
+import xyz.letzcollab.backend.dto.project.ProjectRawStatsDto;
+import xyz.letzcollab.backend.dto.task.TaskRawStatsDto;
+import xyz.letzcollab.backend.dto.workspace.*;
 import xyz.letzcollab.backend.entity.User;
 import xyz.letzcollab.backend.entity.Workspace;
 import xyz.letzcollab.backend.entity.WorkspaceMember;
 import xyz.letzcollab.backend.global.exception.CustomException;
-import xyz.letzcollab.backend.repository.UserRepository;
-import xyz.letzcollab.backend.repository.WorkspaceMemberRepository;
-import xyz.letzcollab.backend.repository.WorkspaceRepository;
+import xyz.letzcollab.backend.repository.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,6 +33,8 @@ public class WorkspaceService {
 	private final WorkspaceRepository workspaceRepository;
 	private final WorkspaceMemberRepository workspaceMemberRepository;
 	private final UserRepository userRepository;
+	private final ProjectRepository projectRepository;
+	private final TaskRepository taskRepository;
 
 	/**
 	 * (워크스페이스 이름, 소유자 ID)에 복합 unique 제약조건이 있음
@@ -92,6 +94,14 @@ public class WorkspaceService {
 		Workspace foundWorkspace = getWorkspaceAndCheckOwner(userPublicId, workspacePublicId);
 		foundWorkspace.softDelete();
 		log.info("워크스페이스 삭제 - workspaceId={}, ownerUserId={}", workspacePublicId, userPublicId);
+	}
+
+	public WorkspaceStatsResponse getStats(UUID userPublicId, UUID workspacePublicId) {
+		validateMemberAndWorkspaceExistence(userPublicId, workspacePublicId);
+		ProjectRawStatsDto projectStats = projectRepository.aggregateProjectStats(workspacePublicId, LocalDate.now());
+		TaskRawStatsDto taskStats = taskRepository.aggregateTaskStats(workspacePublicId, LocalDate.now());
+		long count = workspaceMemberRepository.countByWorkspacePublicId(workspacePublicId);
+		return WorkspaceStatsResponse.from(projectStats, taskStats, count);
 	}
 
 

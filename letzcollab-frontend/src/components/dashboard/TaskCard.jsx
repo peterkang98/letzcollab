@@ -11,7 +11,7 @@ export default function TaskCard({ task }) {
   const due = formatDueDate(task.dueDate);
 
   return (
-    <Card size="small" hoverable styles={{ body: { padding: '12px 16px' } }}>
+    <Card size="small" variant={"borderless"} hoverable styles={{ body: { padding: '12px 16px' } }}>
       <Flex vertical gap={6}>
 
         <Flex justify="space-between" align="center">

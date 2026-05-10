@@ -6,9 +6,12 @@ import api from '../api/axios.js';
 import ProjectCard from '../components/dashboard/ProjectCard.jsx';
 import TaskCard from '../components/dashboard/TaskCard.jsx';
 import { useWorkspace } from "../contexts/WorkspaceContext.jsx";
+import WorkspaceStats from "../components/dashboard/WorkspaceStats.jsx";
 
 const { Title, Text } = Typography;
-const POLLING_INTERVAL = 1000 * 60;
+const PROJECT_POLLING_INTERVAL = 1000 * 60 * 3;
+const TASK_POLLING_INTERVAL = 1000 * 60;
+const STATS_POLLING_INTERVAL = 1000 * 60 * 5;
 
 export default function Dashboard() {
   const user = JSON.parse(localStorage.getItem('user'));
@@ -22,7 +25,7 @@ export default function Dashboard() {
       return res.data.data;
     },
     enabled: !!workspaceId,
-    refetchInterval: POLLING_INTERVAL,
+    refetchInterval: PROJECT_POLLING_INTERVAL,
     refetchIntervalInBackground: false
   });
 
@@ -33,8 +36,19 @@ export default function Dashboard() {
       return res.data.data;
     },
     enabled: !!workspaceId,
-    refetchInterval: POLLING_INTERVAL,
+    refetchInterval: TASK_POLLING_INTERVAL,
     refetchIntervalInBackground: false
+  });
+
+  const { data: statsData, isLoading: statsLoading } = useQuery({
+    queryKey: ['workspaceStats', workspaceId],
+    queryFn: async () => {
+      const res = await api.get(`/workspaces/${workspaceId}/stats`);
+      return res.data.data;
+    },
+    enabled: !!workspaceId,
+    refetchInterval: STATS_POLLING_INTERVAL,
+    refetchIntervalInBackground: false,
   });
 
   const projects = projectsData?.content ?? [];
@@ -54,85 +68,94 @@ export default function Dashboard() {
       {!workspaceId ? (
         <Flex justify="center" align="center" style={{ minHeight: 320 }}>
           <Empty
-            image={<ProjectOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />}
+            image={<ProjectOutlined style={{ fontSize: 48, color: '#d9d9d9' }}/>}
             styles={{ image: { height: 60 } }}
             description={<Text type="secondary">사이드바에서 워크스페이스를 선택하면 대시보드가 표시됩니다</Text>}
           />
         </Flex>
       ) : (
-        <Row gutter={[24, 24]}>
+        <Flex vertical gap={24}>
+          {/* 워크스페이스 현황 */}
+          <Flex vertical gap={16}>
+            <Text strong style={{ fontSize: 15 }}>워크스페이스 현황</Text>
+            <WorkspaceStats data={statsData} isLoading={statsLoading} />
+          </Flex>
 
-          <Col xs={24} lg={13}>
-            <Flex vertical gap={12}>
-              <Flex justify="space-between" align="center">
-                <Text strong style={{ fontSize: 15 }}>프로젝트</Text>
-                {/* totalElements로 전체 개수 표시, 20개 초과 시 "최근 20개" 안내 */}
-                {projectsData && (
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    총 {totalProjects}개
-                    {totalProjects > 20 && ' (최근 20개)'}
-                  </Text>
+          {/* 프로젝트 목록 + 내 업무 */}
+          <Row gutter={[16, 16]}>
+
+            <Col xs={24} lg={12}>
+              <Flex vertical gap={12}>
+                <Flex justify="space-between" align="center">
+                  <Text strong style={{ fontSize: 15 }}>프로젝트</Text>
+                  {/* totalElements로 전체 개수 표시, 20개 초과 시 "최근 20개" 안내 */}
+                  {projectsData && (
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      총 {totalProjects}개
+                      {totalProjects > 20 && ' (최근 20개)'}
+                    </Text>
+                  )}
+                </Flex>
+                {projectsLoading ? (
+                  <Flex vertical gap={8}>
+                    {[1, 2, 3].map(i => <Skeleton key={i} active paragraph={{ rows: 2 }}/>)}
+                  </Flex>
+                ) : !projects.length ? (
+                  <Empty description="프로젝트가 없습니다"/>
+                ) : (
+                  <Flex vertical gap={8}>
+                    {projects.map(p => (
+                      <div
+                        key={p.publicId}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => nav(`/workspaces/${workspaceId}/projects/${p.publicId}`)}
+                      >
+                        <ProjectCard project={p}/>
+                      </div>
+                    ))}
+                  </Flex>
                 )}
               </Flex>
-              {projectsLoading ? (
-                <Flex vertical gap={8}>
-                  {[1, 2, 3].map(i => <Skeleton key={i} active paragraph={{ rows: 2 }}/>)}
-                </Flex>
-              ) : !projects.length ? (
-                <Empty description="프로젝트가 없습니다"/>
-              ) : (
-                <Flex vertical gap={8}>
-                  {projects.map(p => (
-                    <div
-                      key={p.publicId}
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => nav(`/workspaces/${workspaceId}/projects/${p.publicId}`)}
-                    >
-                      <ProjectCard project={p}/>
-                    </div>
-                  ))}
-                </Flex>
-              )}
-            </Flex>
-          </Col>
+            </Col>
 
-          <Col xs={24} lg={11}>
-            <Flex vertical gap={12}>
-              <Flex justify="space-between" align="center">
-                <Text strong style={{ fontSize: 15 }}>내 업무</Text>
-                {myTasksData && (
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    총 {totalMyTasks}개
-                    {totalMyTasks > 20 && ' (마감 임박순 20개)'}
-                  </Text>
+            <Col xs={24} lg={12}>
+              <Flex vertical gap={12}>
+                <Flex justify="space-between" align="center">
+                  <Text strong style={{ fontSize: 15 }}>내 업무</Text>
+                  {myTasksData && (
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      총 {totalMyTasks}개
+                      {totalMyTasks > 20 && ' (마감 임박순 20개)'}
+                    </Text>
+                  )}
+                </Flex>
+                {tasksLoading ? (
+                  <Flex vertical gap={8}>
+                    {[1, 2, 3].map(i => <Skeleton key={i} active paragraph={{ rows: 2 }}/>)}
+                  </Flex>
+                ) : !myTasks.length ? (
+                  <Empty description="담당 업무가 없습니다"/>
+                ) : (
+                  <Flex vertical gap={8}>
+                    {myTasks.map(t => (
+                      <div
+                        key={t.publicId}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => t.projectPublicId
+                          ? nav(`/projects/${t.projectPublicId}/tasks/${t.publicId}`)
+                          : undefined
+                        }
+                      >
+                        <TaskCard task={t}/>
+                      </div>
+                    ))}
+                  </Flex>
                 )}
               </Flex>
-              {tasksLoading ? (
-                <Flex vertical gap={8}>
-                  {[1, 2, 3].map(i => <Skeleton key={i} active paragraph={{ rows: 2 }}/>)}
-                </Flex>
-              ) : !myTasks.length ? (
-                <Empty description="담당 업무가 없습니다"/>
-              ) : (
-                <Flex vertical gap={8}>
-                  {myTasks.map(t => (
-                    <div
-                      key={t.publicId}
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => t.projectPublicId
-                        ? nav(`/projects/${t.projectPublicId}/tasks/${t.publicId}`)
-                        : undefined
-                      }
-                    >
-                      <TaskCard task={t}/>
-                    </div>
-                  ))}
-                </Flex>
-              )}
-            </Flex>
-          </Col>
+            </Col>
 
-        </Row>
+          </Row>
+        </Flex>
       )}
     </Flex>
   );
