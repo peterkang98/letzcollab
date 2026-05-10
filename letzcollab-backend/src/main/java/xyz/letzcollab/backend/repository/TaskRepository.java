@@ -3,7 +3,7 @@ package xyz.letzcollab.backend.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import xyz.letzcollab.backend.dto.workspace.TaskRawStatsDto;
+import xyz.letzcollab.backend.dto.task.TaskRawStatsDto;
 import xyz.letzcollab.backend.entity.Task;
 
 import java.time.LocalDate;
@@ -63,7 +63,7 @@ public interface TaskRepository extends JpaRepository<Task, Long>, TaskRepositor
 
 	// 특정 워크스페이스의 업무 통계를 실시간으로 집계
 	@Query("""
-			SELECT new xyz.letzcollab.backend.dto.workspace.TaskRawStatsDto(
+			SELECT new xyz.letzcollab.backend.dto.task.TaskRawStatsDto(
 				COUNT(DISTINCT t.id),
 				COALESCE(SUM(CASE WHEN t.status = 'TODO' THEN 1 ELSE 0 END), 0),
 				COALESCE(SUM(CASE WHEN t.status = 'IN_PROGRESS' THEN 1 ELSE 0 END), 0),

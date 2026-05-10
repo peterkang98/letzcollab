@@ -1,6 +1,8 @@
 package xyz.letzcollab.backend.dto.workspace;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import xyz.letzcollab.backend.dto.project.ProjectRawStatsDto;
+import xyz.letzcollab.backend.dto.task.TaskRawStatsDto;
 
 @Schema(description = "워크스페이스 통계 응답 DTO")
 public record WorkspaceStatsResponse(

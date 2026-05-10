@@ -1,4 +1,4 @@
-package xyz.letzcollab.backend.dto.workspace;
+package xyz.letzcollab.backend.dto.project;
 
 public record ProjectRawStatsDto(
 	long totalProjects,

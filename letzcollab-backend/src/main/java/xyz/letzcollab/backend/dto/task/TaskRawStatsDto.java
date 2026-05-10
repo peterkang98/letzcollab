@@ -1,4 +1,4 @@
-package xyz.letzcollab.backend.dto.workspace;
+package xyz.letzcollab.backend.dto.task;
 
 public record TaskRawStatsDto(
 	long totalTasks,
