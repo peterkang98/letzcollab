@@ -549,8 +549,12 @@ letzcollab/
 │       │   └── axios.js                 # Axios 인스턴스 (baseURL, credentials, JWT 만료 인터셉터)
 │       ├── components/
 │       │   ├── dashboard/
-│       │   │   ├── ProjectCard.jsx      # 프로젝트 카드 (상태, 리더, 기간, 공개여부 표시)
-│       │   │   └── TaskCard.jsx         # 업무 카드 (우선순위, 상태, 마감일 표시)
+│       │   │   ├── ProjectCard.jsx         # 프로젝트 카드 (상태, 리더, 기간, 공개여부 표시)
+│       │   │   ├── ProjectStatusList.jsx   # 프로젝트 상태별 현황
+│       │   │   ├── StatCard.jsx            # 워크스페이스 통계 요약 수치 카드
+│       │   │   ├── TaskDistributionBar.jsx # 업무 상태별 분포 바
+│       │   │   ├── WorkspaceStats.jsx      # 워크스페이스 통계 (프로젝트 현황, 업무 현황 등 표시)
+│       │   │   └── TaskCard.jsx            # 업무 카드 (우선순위, 상태, 마감일 표시)
 │       │   ├── project/
 │       │   │   ├── AddProjectMemberModal.jsx
 │       │   │   ├── CreateTaskModal.jsx
@@ -706,6 +710,7 @@ letzcollab/
             │   │   ├── WorkspaceResponse.java
             │   │   ├── WorkspaceDetailsResponse.java
             │   │   ├── WorkspaceInviteRequest.java
+            │   │   ├── WorkspaceStatsResponse.java
             │   │   ├── AcceptWorkspaceInvitationRequest.java
             │   │   ├── OwnerDto.java
             │   │   ├── MemberSummaryDto.java
@@ -717,6 +722,7 @@ letzcollab/
             │   │   ├── UpdateProjectRequest.java
             │   │   ├── ProjectResponse.java
             │   │   ├── ProjectDetailsResponse.java
+            │   │   ├── ProjectRawStatsDto.java
             │   │   ├── ProjectSearchCond.java
             │   │   ├── AddMemberRequest.java
             │   │   ├── UpdateMyselfRequest.java
@@ -729,6 +735,7 @@ letzcollab/
             │   │   ├── UpdateTaskRequest.java
             │   │   ├── TaskResponse.java
             │   │   ├── TaskDetailsResponse.java
+            │   │   ├── TaskRawStatsDto.java
             │   │   ├── TaskSearchCond.java
             │   │   ├── MyTaskResponse.java
             │   │   └── MyTaskSearchCond.java
