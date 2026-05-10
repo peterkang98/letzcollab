@@ -11,7 +11,7 @@
 
 > 반응형 웹 디자인
 
-<img width="2912" alt="Image" src="https://github.com/user-attachments/assets/76d1d906-1448-47aa-b4c3-039171b7d26c" />
+<img width="3384" alt="Image" src="https://github.com/user-attachments/assets/c0eb6388-f70e-43b5-80c7-3664bb881d8c" />
 
 > 사이드바 기능
 
