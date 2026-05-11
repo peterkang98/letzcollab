@@ -1,6 +1,6 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
-import { SharedArray } from 'k6/data'
+import { BASE_URL, tokens, workspaceIds, commonSetup} from "./common.js";
 
 // 실행하기 전에 테스트 폴더에 있는 LoadTestDataGenerator 실행해서 tokens.txt랑 workspacePublicIds.txt를 미리 만들어야 함
 // 프로젝트 루트에서 실행할 명령어: K6_WEB_DASHBOARD=true k6 run k6-scripts/dashboard-test.js
@@ -14,19 +14,8 @@ export let options = {
   ],
 };
 
-const BASE_URL = 'http://localhost:8080/api';
-
-const tokens = new SharedArray('user tokens',
-  () => open('../tokens.txt').split('\n').filter(t => t.trim().length > 0));
-const workspaceIds = new SharedArray('workspace ids',
-  () => open('../workspacePublicIds.txt').split('\n').filter(t => t.trim().length > 0));
-
 export function setup() {
-  console.log(`로드 완료: 토큰 ${tokens.length}개 / 워크스페이스ID ${workspaceIds.length}개`);
-  // 데이터 개수가 맞지 않으면 경고 출력
-  if (tokens.length !== workspaceIds.length) {
-    console.warn('경고: 토큰과 워크스페이스 ID의 개수가 일치하지 않습니다!');
-  }
+  commonSetup();
 }
 
 // VU마다 반복 실행
