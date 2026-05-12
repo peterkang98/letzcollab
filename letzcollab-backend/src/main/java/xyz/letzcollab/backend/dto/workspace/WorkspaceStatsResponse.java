@@ -1,8 +1,9 @@
 package xyz.letzcollab.backend.dto.workspace;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import xyz.letzcollab.backend.dto.project.ProjectRawStatsDto;
-import xyz.letzcollab.backend.dto.task.TaskRawStatsDto;
+import xyz.letzcollab.backend.entity.WorkspaceStatsSnapshot;
+
+import java.time.LocalDateTime;
 
 @Schema(description = "워크스페이스 통계 응답 DTO")
 public record WorkspaceStatsResponse(
@@ -13,7 +14,10 @@ public record WorkspaceStatsResponse(
 	TaskStats tasks,
 
 	@Schema(description = "전체 멤버 수")
-	long totalMembers
+	long totalMembers,
+
+	@Schema(description = "갱신 시간")
+	LocalDateTime updatedAt
 ) {
 
 	@Schema(description = "프로젝트 통계")
@@ -38,34 +42,42 @@ public record WorkspaceStatsResponse(
 		@Schema(description = "업무 완료율 (0~100)", example = "72") int completionRate
 	) {}
 
-	public static WorkspaceStatsResponse from(ProjectRawStatsDto projectDto, TaskRawStatsDto taskDto, long totalMembers) {
-		int completionRate = 0;
-		long effective = taskDto.totalTasks() - taskDto.cancelledTasks();
-
-		if (effective > 0) {
-			completionRate = (int) Math.round(taskDto.doneTasks() * 100.0 / effective);
-		}
+	public static WorkspaceStatsResponse from(WorkspaceStatsSnapshot snapshot) {
+		int completionRate = getCompletionRate(
+				snapshot.getTotalTasks(), snapshot.getCancelledTasks(), snapshot.getDoneTasks()
+		);
 
 		return new WorkspaceStatsResponse(
 			new ProjectStats(
-				projectDto.totalProjects(),
-				projectDto.plannedProjects(),
-				projectDto.activeProjects(),
-				projectDto.onHoldProjects(),
-				projectDto.completedProjects(),
-				projectDto.archivedProjects()
+					snapshot.getTotalProjects(),
+					snapshot.getPlannedProjects(),
+					snapshot.getActiveProjects(),
+					snapshot.getOnHoldProjects(),
+					snapshot.getCompletedProjects(),
+					snapshot.getArchivedProjects()
 			),
 			new TaskStats(
-				taskDto.totalTasks(),
-				taskDto.todoTasks(),
-				taskDto.inProgressTasks(),
-				taskDto.inReviewTasks(),
-				taskDto.doneTasks(),
-				taskDto.cancelledTasks(),
-				taskDto.overdueTasks(),
-				completionRate
+					snapshot.getTotalTasks(),
+					snapshot.getTodoTasks(),
+					snapshot.getInProgressTasks(),
+					snapshot.getInReviewTasks(),
+					snapshot.getDoneTasks(),
+					snapshot.getCancelledTasks(),
+					snapshot.getOverdueTasks(),
+					completionRate
 			),
-			totalMembers
+			snapshot.getTotalMembers(),
+			snapshot.getUpdatedAt()
 		);
+	}
+
+	private static int getCompletionRate(long totalTasks, long cancelledTasks, long doneTasks) {
+		int completionRate = 0;
+		long effective = totalTasks - cancelledTasks;
+
+		if (effective > 0) {
+			completionRate = (int) Math.round(doneTasks * 100.0 / effective);
+		}
+		return completionRate;
 	}
 }
