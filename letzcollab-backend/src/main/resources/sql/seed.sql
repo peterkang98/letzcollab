@@ -198,3 +198,55 @@ JOIN users u ON u.user_id = i
 ON CONFLICT DO NOTHING;
 
 SELECT setval('notifications_seq', (SELECT MAX(notification_id) FROM notifications));
+
+
+-- 9. 대규모 워크스페이스 시나리오
+-- 홀수 번호 워크스페이스(1, 3, ..., ~ 51)에 프로젝트 500개 씩 -> 각 프로젝트에 업무 40개씩
+
+-- 홀수 번호 워크스페이스에 프로젝트 대량 삽입
+INSERT INTO projects (
+    project_id, public_id, workspace_id, name, description, status, start_date, end_date, is_private, lead_id,
+    created_at, updated_at, created_by, updated_by
+)
+SELECT
+    750000 + (ws.id * 500) + p_idx,
+    gen_random_uuid(),
+    ws.id,
+    '기업형-프로젝트-' || ws.id || '-' || p_idx,
+    '대규모 조직용 프로젝트 데이터',
+    (ARRAY['PLANNED','ACTIVE','ON_HOLD','COMPLETED','ARCHIVED'])[(p_idx % 5) + 1],
+    CURRENT_DATE - 60,
+    CURRENT_DATE + 120,
+    false,
+    w.owner_id,
+    NOW(), NOW(),
+    gen_random_uuid(), gen_random_uuid()
+FROM generate_series(1, 51, 2) AS ws(id) -- 1부터 51까지 홀수만
+CROSS JOIN generate_series(1, 500) AS p_idx -- 워크스페이스당 500개
+JOIN workspaces w ON w.workspace_id = ws.id;
+
+SELECT setval('projects_seq', (SELECT MAX(project_id) FROM projects));
+
+
+-- 생성된 프로젝트들에 업무 대량 삽입 (각 프로젝트당 40개씩)
+INSERT INTO tasks (
+    task_id, public_id, project_id, name, description, status, assignee_id, priority, reporter_id, due_date,
+    created_at, updated_at, created_by, updated_by
+)
+SELECT
+    2250000 + (p.project_id * 40) + t_idx,
+    gen_random_uuid(),
+    p.project_id,
+    '업무-' || p.project_id || '-' || t_idx,
+    '대규모 업무 집계 테스트',
+    (ARRAY['TODO','IN_PROGRESS','IN_REVIEW','DONE','CANCELLED'])[(t_idx % 5) + 1],
+    p.lead_id,
+    (ARRAY['LOW','MEDIUM','HIGH','URGENT'])[(t_idx % 4) + 1],
+    p.lead_id,
+    CURRENT_DATE + (t_idx % 60) - 10, -- 일부는 과거 날짜로 해서 overdue 유도
+    NOW(), NOW(),
+    gen_random_uuid(), gen_random_uuid()
+FROM (SELECT project_id, lead_id FROM projects WHERE name LIKE '기업형-프로젝트-%') p
+CROSS JOIN generate_series(1, 40) AS t_idx;
+
+SELECT setval('tasks_seq', (SELECT MAX(task_id) FROM tasks));

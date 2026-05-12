@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import xyz.letzcollab.backend.PostgresTestContainer;
 import xyz.letzcollab.backend.TestAuditConfig;
 import xyz.letzcollab.backend.dto.workspace.WorkspaceDetailsResponse;
 import xyz.letzcollab.backend.dto.workspace.WorkspaceResponse;
@@ -32,7 +33,7 @@ import static xyz.letzcollab.backend.global.exception.ErrorCode.*;
 @ActiveProfiles("test")
 @Import(TestAuditConfig.class)
 @DisplayName("WorkspaceService 통합 테스트")
-class WorkspaceServiceTest {
+class WorkspaceServiceTest extends PostgresTestContainer {
 	@Autowired
 	WorkspaceService workspaceService;
 
@@ -303,7 +304,7 @@ class WorkspaceServiceTest {
 				for (int j = 0; j < 3; j++) {
 					// TODO 상태인 업무를 3개 생성
 					Task task = Task.createTask(
-							project, "업무" + i, "", otherUser, TaskPriority.values()[i], null,
+							project, "업무" + i, "", otherUser, TaskPriority.values()[j], null,
 							owner, LocalDate.now().plusDays(30)
 					);
 					taskRepository.save(task);

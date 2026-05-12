@@ -10,7 +10,13 @@ services:
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    command: ["postgres", "-c", "shared_buffers=512MB"]
+    command: [
+      "postgres",
+      # 디스크에서 자주 읽는 데이터를 메모리에 캐싱 (전체 DB 인스턴스가 공유)
+      "-c", "shared_buffers=512MB",
+      # 쿼리의 정렬이나 조인 연산을 위해 개별 연산 노드에 할당되는 메모리
+      "-c", "work_mem=128MB",
+    ]
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
       interval: 10s
