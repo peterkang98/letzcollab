@@ -73,11 +73,17 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
 			@Param("targetMemberUserPublicId")UUID targetMemberUserPublicId
 	);
 
+	@Query("SELECT wm.workspace.id " +
+			"FROM WorkspaceMember wm " +
+			"WHERE wm.workspace.publicId = :workspacePublicId AND wm.user.publicId = :userPublicId")
+	Optional<Long> findWorkspaceIdByPublicIds(
+			@Param("workspacePublicId") UUID workspacePublicId,
+			@Param("userPublicId") UUID userPublicId
+	);
+
 	boolean existsByWorkspacePublicIdAndUserEmail(UUID workspacePublicId, String email);
 
 	boolean existsByWorkspacePublicIdAndUserPublicId(UUID workspacePublicId, UUID userPublicId);
 
 	boolean existsByWorkspaceAndUser(Workspace workspace, User user);
-
-	long countByWorkspacePublicId(UUID workspacePublicId);
 }

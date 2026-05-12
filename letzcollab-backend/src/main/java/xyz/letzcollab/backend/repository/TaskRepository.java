@@ -3,7 +3,6 @@ package xyz.letzcollab.backend.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import xyz.letzcollab.backend.dto.task.TaskRawStatsDto;
 import xyz.letzcollab.backend.entity.Task;
 
 import java.time.LocalDate;
@@ -60,21 +59,4 @@ public interface TaskRepository extends JpaRepository<Task, Long>, TaskRepositor
 			"WHERE t.dueDate = :dueDate " +
 			"AND t.status NOT IN ('DONE', 'CANCELLED')")
 	List<Task> findActiveTasksByDueDate(@Param("dueDate") LocalDate dueDate);
-
-	// 특정 워크스페이스의 업무 통계를 실시간으로 집계
-	@Query("""
-			SELECT new xyz.letzcollab.backend.dto.task.TaskRawStatsDto(
-				COUNT(DISTINCT t.id),
-				COALESCE(SUM(CASE WHEN t.status = 'TODO' THEN 1 ELSE 0 END), 0),
-				COALESCE(SUM(CASE WHEN t.status = 'IN_PROGRESS' THEN 1 ELSE 0 END), 0),
-				COALESCE(SUM(CASE WHEN t.status = 'IN_REVIEW' THEN 1 ELSE 0 END), 0),
-				COALESCE(SUM(CASE WHEN t.status = 'DONE' THEN 1 ELSE 0 END), 0),
-				COALESCE(SUM(CASE WHEN t.status = 'CANCELLED' THEN 1 ELSE 0 END), 0),
-				COALESCE(SUM(CASE WHEN t.dueDate < :today AND t.status NOT IN ('DONE', 'CANCELLED') THEN 1 ELSE 0 END), 0)
-			)
-			FROM Task t
-			JOIN Project p on t.project = p
-			WHERE p.workspace.publicId = :workspacePublicId
-			""")
-	TaskRawStatsDto aggregateTaskStats(@Param("workspacePublicId") UUID workspacePublicId, @Param("today") LocalDate today);
 }
