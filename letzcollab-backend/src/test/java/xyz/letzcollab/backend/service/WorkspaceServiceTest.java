@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import xyz.letzcollab.backend.PostgresTestContainer;
 import xyz.letzcollab.backend.TestAuditConfig;
 import xyz.letzcollab.backend.dto.workspace.WorkspaceDetailsResponse;
 import xyz.letzcollab.backend.dto.workspace.WorkspaceResponse;
@@ -32,7 +33,7 @@ import static xyz.letzcollab.backend.global.exception.ErrorCode.*;
 @ActiveProfiles("test")
 @Import(TestAuditConfig.class)
 @DisplayName("WorkspaceService 통합 테스트")
-class WorkspaceServiceTest {
+class WorkspaceServiceTest extends PostgresTestContainer {
 	@Autowired
 	WorkspaceService workspaceService;
 
