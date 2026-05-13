@@ -10,6 +10,14 @@ services:
       TZ: Asia/Seoul
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
+    command: [
+      "postgres",
+      # 디스크에서 자주 읽는 데이터를 메모리에 캐싱 (전체 DB 인스턴스가 공유)
+      "-c", "shared_buffers=256MB",
+      # 쿼리의 정렬이나 조인 연산을 위해 개별 연산 노드에 할당되는 메모리
+      "-c", "work_mem=64MB",
+      "-c", "effective_cache_size=1536MB"
+    ]
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
       interval: 10s
@@ -17,6 +25,11 @@ services:
       retries: 5
     networks:
       - letzcollab-net
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1536M
 
   backend:
     image: ghcr.io/peterkang98/letzcollab/backend:latest
@@ -31,9 +44,15 @@ services:
       # secrets.ENV_FILE
       - .env
     environment:
-      TZ: Asia/Seoul
+      - TZ=Asia/Seoul
+      - JAVA_OPTS=-Xms512m -Xmx512m
     networks:
       - letzcollab-net
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
 
   redis:
     image: redis:7-alpine
@@ -44,6 +63,11 @@ services:
       TZ: Asia/Seoul
     networks:
       - letzcollab-net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 300M
 
   frontend:
     image: ghcr.io/peterkang98/letzcollab/frontend:latest
@@ -64,6 +88,11 @@ services:
       - backend
     networks:
       - letzcollab-net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
 
   certbot:
     image: certbot/certbot
