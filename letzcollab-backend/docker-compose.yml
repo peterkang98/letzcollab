@@ -52,6 +52,7 @@ services:
     environment:
       - JAVA_OPTS=-Xms512m -Xmx512m  # JVM 힙 메모리 제한
       - SPRING_DATASOURCE_URL=jdbc:postgresql://letzcollab-db:5432/letzcollab_db
+      - SPRING_DATA_REDIS_HOST=letzcollab-redis
     env_file:
       - .env
     deploy:
