@@ -9,7 +9,7 @@
 ---
 ## 스크린샷
 
-> 반응형 웹 디자인
+> 대시보드 (반응형 웹 디자인)
 
 <img width="2746" alt="Image" src="https://github.com/user-attachments/assets/a90346cd-be97-427d-8806-fd0a7629c61b" />
 
@@ -35,7 +35,7 @@
 
 > 스웨거 문서
 
-<img width="2146" alt="Image" src="https://github.com/user-attachments/assets/cccff5cd-77f3-4734-8c47-641bf1fa8599" />
+<img width="2170" height="3694" alt="Image" src="https://github.com/user-attachments/assets/c99cc3a6-c698-4107-af93-228e8c19b7c2" />
 
 ---
 
