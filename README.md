@@ -11,7 +11,7 @@
 
 > 반응형 웹 디자인
 
-<img width="3384" alt="Image" src="https://github.com/user-attachments/assets/c0eb6388-f70e-43b5-80c7-3664bb881d8c" />
+<img width="2746" alt="Image" src="https://github.com/user-attachments/assets/a90346cd-be97-427d-8806-fd0a7629c61b" />
 
 > 사이드바 기능
 
@@ -124,9 +124,6 @@ JWT_REFRESH_EXP_TIME= (갱신 토큰 유효기간(일수) 설정)
 DB_USER=
 DB_PASSWORD=
 DB_NAME=
-
-# Redis 비번 (운영 환경에만 필요)
-REDIS_PASSWORD=
 ```
 
 #### 2. 백엔드 실행
@@ -257,18 +254,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 ---
 
-#### C. 복잡한 동적 쿼리 최적화 (QueryDSL)
-
-프로젝트/업무 목록처럼 다중 필터 조건이 붙는 검색에 JPQL 문자열 조합 대신 QueryDSL을 적용했습니다.
-
-- 각 필터 조건(상태, 우선순위, 담당자, 마감일 범위 등)을 `BooleanExpression`을 반환하는 메서드로 분리
-- 동적 정렬은 `PathBuilder` 기반 `OrderSpecifier`로 허용 필드(`name`, `createdAt`, `status`)만 화이트리스트로 제한 → SQL Injection 및 의도치 않은 정렬
-  방지
-- 프로젝트 상세 조회 시 리더 유저, 프로젝트 멤버, 멤버별 유저 정보를 FETCH JOIN으로 단 1개의 쿼리로 처리하며, 접근 권한 검증도 `where`절에서 함께 수행
-
----
-
-#### D. 보안 및 인증 (Spring Security + JWT + Audit)
+#### C. 보안 및 인증 (Spring Security + JWT + Audit)
 
 1. **웹/모바일 듀얼 클라이언트 인증 전략**
     - **로그인 시** : `X-Client-Type` 헤더 값에 따라 JWT 전달 방식 분기
@@ -301,7 +287,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 ---
 
-#### E. UUID publicId / Long id 이중 키 전략
+#### D. UUID publicId / Long id 이중 키 전략
 
 - 내부 PK: `Long id` → 테이블 JOIN 성능 확보
 - 외부 노출: `UUID publicId` → API URL 및 응답 바디에만 사용
@@ -310,7 +296,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 ---
 
-#### F. 비동기 이메일 서비스 및 남용 방지 (Rate Limiting)
+#### E. 비동기 이메일 서비스 및 남용 방지 (Rate Limiting)
 
 - `EmailContext` 인터페이스(`getTemplateName()`, `getSubject()`, `getVariables()`)를 전략 패턴으로 설계
     - `VerifyEmailContext`, `PasswordResetEmailContext` 등: 각 이메일 유형을 record로 작성하고 인터페이스를 `EmailContext` 구현
@@ -324,7 +310,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 ---
 
-#### G. 공통 인프라 설계
+#### F. 공통 인프라 설계
 
 1. **3단계 베이스 엔티티 계층**
     - `DateBaseEntity`(createdAt, updatedAt) → `PublicIdAndDateBaseEntity`(+ publicId) →
@@ -345,7 +331,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 ---
 
-#### H. Soft Delete
+#### G. Soft Delete
 
 - 워크스페이스, 프로젝트 등 핵심 엔티티 삭제 시, 바로 DB에서 삭제하는 대신 테이블의 `deleted_at` 컬럼으로 삭제 상태를 표시
     - 엔티티에 `@SQLRestriction("deleted_at IS NULL")`을 사용해서 soft delete 처리된 행은 조회되지 않도록 처리
@@ -353,7 +339,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 ---
 
-#### I. CI/CD 파이프라인 (GitHub Actions + Docker + 네이버 클라우드)
+#### H. CI/CD 파이프라인 (GitHub Actions + Docker + 네이버 클라우드)
 
 - `main` 브랜치 push를 트리거로 3단계 파이프라인 자동 실행
     1. **Test** : `spring.profiles.active=test` 프로파일로 전체 테스트 실행, 실패 시 배포 중단
@@ -368,7 +354,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 ## 4. ERD
 
-<img width="2138" alt="Image" src="https://github.com/user-attachments/assets/6838449a-6db3-4dee-b4d8-4c50b20df050" />
+<img width="2125" alt="Image" src="https://github.com/user-attachments/assets/88f56364-a0d7-4743-9cd5-fc2e6eca0005" />
 
 ---
 
@@ -399,13 +385,14 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 ### Workspace
 
-| 메소드    | Endpoint                          | 설명                           | 인증 |
-|--------|-----------------------------------|------------------------------|----|
-| POST   | `/workspaces`                     | 워크스페이스 생성                    | 🔒 |
-| GET    | `/workspaces`                     | 내 워크스페이스 목록 조회               | 🔒 |
-| GET    | `/workspaces/{workspacePublicId}` | 워크스페이스 상세 조회 (멤버, 소유자 정보 포함) | 🔒 |
-| PATCH  | `/workspaces/{workspacePublicId}` | 워크스페이스 수정                    | 🔒 |
-| DELETE | `/workspaces/{workspacePublicId}` | 워크스페이스 삭제 (Soft Delete)      | 🔒 |
+| 메소드    | Endpoint                                | 설명                           | 인증 |
+|--------|-----------------------------------------|------------------------------|----|
+| POST   | `/workspaces`                           | 워크스페이스 생성                    | 🔒 |
+| GET    | `/workspaces`                           | 내 워크스페이스 목록 조회               | 🔒 |
+| GET    | `/workspaces/{workspacePublicId}`       | 워크스페이스 상세 조회 (멤버, 소유자 정보 포함) | 🔒 |
+| PATCH  | `/workspaces/{workspacePublicId}`       | 워크스페이스 수정                    | 🔒 |
+| DELETE | `/workspaces/{workspacePublicId}`       | 워크스페이스 삭제 (Soft Delete)      | 🔒 |
+| GET    | `/workspaces/{workspacePublicId}/stats` | 워크스페이스 통계 조회                 | 🔒 |
 
 ### Workspace Member
 
@@ -489,7 +476,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 ## 6. 성능 개선
 
-### 이메일 발송 성능 개선
+### 1. 이메일 발송 성능 개선
 
 기존에는 이메일 발송을 서비스 레이어에서 동기적으로 직접 처리하여, SMTP 응답 지연이 API 응답 속도에 직접적인 영향을 미쳤습니다.
 
@@ -519,6 +506,45 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 | 평균(2~10회) | **약 452 ms** | **약 85 ms**   |
 
 > → 평균 응답 속도 **약 81% 단축**
+
+### 2. 워크스페이스 통계 조회 성능 개선
+
+기존에는 요청마다 애플리케이션 단에서 다중 집계 쿼리를 실시간으로 수행하여, 워크스페이스 규모가 커질수록 DB 연산 비용이 선형적으로 증가하는 문제가 있었습니다.
+
+#### 개선 과정
+
+- **스냅샷 테이블 도입**으로 사전 집계된 통계 데이터를 단건 PK 조회로 대체
+    - `WorkspaceStatsSnapshot` 엔티티 추가
+    - `WorkspaceService.getStats()`: 스냅샷 우선 조회, 미존재 시 실시간 집계 폴백 처리
+- **배치 집계 쿼리를 단일 네이티브 SQL로 통합**
+    - 기존: 프로젝트 통계(5개 SUM CASE WHEN) + 업무 통계(`Task JOIN Project` + 6개 SUM CASE WHEN) + 멤버 수 조회 → **매 요청마다 3개 쿼리 발생**
+    - 개선: 전체 워크스페이스 통계를 단일 UPSERT 쿼리로 일괄 집계
+    - PostgreSQL DB 설정 `work_mem=128MB`으로 배치 집계 연산 성능 최적화
+- **`WorkspaceStatsScheduler`** 로 4분 주기 스냅샷 자동 갱신
+    - 실시간 집계 없이 캐시된 스냅샷만으로 조회 응답 처리
+    - 스냅샷 생성일시를 프론트엔드에 노출하여 데이터 최신성 확인 가능
+
+#### 성능 개선 결과
+
+> **테스트 조건:** 
+> - 백엔드 컨테이너: CPU 2코어 / RAM 1GB
+> - DB 컨테이너: CPU 2코어 / RAM 2GB 
+> - k6 가상 사용자 300명, 2분 실행
+
+> **데이터 규모:** 총 75개 워크스페이스
+> - 데이터 불균형을 위해 대규모 소규모로 나눔
+> - 대규모 워크스페이스 26개: 프로젝트 500개 × 업무 40개
+> - 소규모 워크스페이스 49개: 프로젝트 3개 × 업무 3개
+
+| 지표              | 개선 전         | 개선 후         | 개선율        |
+|:----------------|:-------------|:-------------|:-----------|
+| 평균 응답 속도 (avg)  | 415.22 ms    | 8.8 ms       | 약 97.8% 감소 |
+| 95% 응답 속도 (p95) | 785.70 ms    | 21.78 ms     | 약 97.2% 감소 |
+| 최대 응답 속도 (max)  | 2.06 s       | 143.69 ms    | 약 93.0% 감소 |
+| 초당 요청 수 (TPS)   | 193.07 req/s | 270.36 req/s | 약 40.0% 증가 |
+| 총 요청 처리 수       | 38,885건      | 54,300건      | 약 39.6% 증가 |
+
+> → 평균 응답 속도 **약 97.8% 단축**, 처리량 **약 40% 증가**
 
 ---
 
@@ -655,6 +681,7 @@ letzcollab/
             │   ├── UserRepository.java
             │   ├── VerificationTokenRepository.java
             │   ├── WorkspaceRepository.java
+            │   ├── WorkspaceStatsSnapshotRepository.java
             │   ├── WorkspaceMemberRepository.java
             │   ├── WorkspaceInvitationRepository.java
             │   ├── ProjectRepository.java
@@ -670,6 +697,7 @@ letzcollab/
             │   ├── User.java
             │   ├── VerificationToken.java
             │   ├── Workspace.java
+            │   ├── WorkspaceStatsSnapshot.java
             │   ├── WorkspaceMember.java
             │   ├── WorkspaceInvitation.java
             │   ├── Project.java
@@ -722,7 +750,6 @@ letzcollab/
             │   │   ├── UpdateProjectRequest.java
             │   │   ├── ProjectResponse.java
             │   │   ├── ProjectDetailsResponse.java
-            │   │   ├── ProjectRawStatsDto.java
             │   │   ├── ProjectSearchCond.java
             │   │   ├── AddMemberRequest.java
             │   │   ├── UpdateMyselfRequest.java
@@ -735,7 +762,6 @@ letzcollab/
             │   │   ├── UpdateTaskRequest.java
             │   │   ├── TaskResponse.java
             │   │   ├── TaskDetailsResponse.java
-            │   │   ├── TaskRawStatsDto.java
             │   │   ├── TaskSearchCond.java
             │   │   ├── MyTaskResponse.java
             │   │   └── MyTaskSearchCond.java
@@ -791,7 +817,8 @@ letzcollab/
             │   │   ├── ProdAuthRateLimiter.java
             │   │   └── ProdInvitationRateLimiter.java
             │   ├── scheduler/
-            │   │   ├── CleanupScheduler.java     # 오래된 알림/인증 토큰/초대장 정리
+            │   │   ├── CleanupScheduler.java                 # 오래된 알림/인증 토큰/초대장 정리
+            │   │   ├── WorkspaceStatsScheduler.java          # 워크스페이스 통계 생성
             │   │   └── TaskDeadlineScheduler.java            # 업무 마감 알림 발송
             │   └── security/
             │       ├── jwt/
