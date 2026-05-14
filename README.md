@@ -44,7 +44,7 @@
 **Let'z Collab**은 현대적인 조직이 겪는 협업의 파편화 문제를 해결하기 위해 설계된 플랫폼입니다. 단순한 업무 관리를 넘어, **워크스페이스 - 프로젝트 - 업무 - 댓글**로 이어지는 계층적인 데이터
 구조를 기반으로 조직/팀 단위의 대규모 협업을 안정적으로 지원합니다.
 
-본 프로젝트는 엔터프라이즈 급 백엔드 아키텍처를 구축하고, 안전한 인증 시스템 및 역할 기반의 권한 제어(RBAC)를 구현하는 데 초점을 맞추었습니다. 네이버 클라우드 플랫폼(NCP)과 Github Actions를
+본 프로젝트는 엔터프라이즈 급 백엔드 아키텍처를 구축하고, 안전한 인증 시스템 및 역할 기반의 권한 제어(RBAC)를 구현하는 데 초점을 맞추었습니다. 오라클 클라우드 인프라(OCI)와 Github Actions를
 사용하여 CI/CD 파이프라인을 직접 구축하고 실제 운영 환경과 동일한 배포 프로세스를 경험했습니다.
 
 - **서비스 URL**: https://letzcollab.xyz/
@@ -56,15 +56,15 @@
 
 ## 2. 기술 스택
 
-| 구분       | 기술                                         |
-|----------|--------------------------------------------|
-| Backend  | Java 21, Spring Boot 3.5                   |
-| Frontend | React 19.2, Vite 7.3                       |
-| Database | PostgreSQL, Redis                          |
-| Email    | Postfix (운영 환경), MailHog (테스트용 가짜 SMTP 서버) |
-| Infra    | Naver Cloud Platform, Docker, NGINX        |
-| SSL      | Let's Encrypt / Certbot                    |
-| CI/CD    | GitHub Actions                             |
+| 구분       | 기술                                                       |
+|----------|----------------------------------------------------------|
+| Backend  | Java 21, Spring Boot 3.5                                 |
+| Frontend | React 19.2, Vite 7.3                                     |
+| Database | PostgreSQL, Redis                                        |
+| Email    | Oracle Email Delivery (운영 환경), MailHog (테스트용 가짜 SMTP 서버) |
+| Infra    | Oracle Cloud Infrastructure, Docker, NGINX               |
+| SSL      | Let's Encrypt / Certbot                                  |
+| CI/CD    | GitHub Actions                                           |
 
 ### 2.1 백엔드 라이브러리
 
@@ -109,8 +109,17 @@
 - Java 21+
 - Node.js 20+
 - Docker
+- Git
 
-#### 1. 환경 변수 설정
+#### 1. 깃 저장소 복제
+먼저 전체 프로젝트 코드를 로컬로 가져옵니다.
+
+```Bash
+git clone https://github.com/peterkang98/letzcollab.git
+cd letzcollab
+```
+
+#### 2. 환경 변수 설정
 
 `letzcollab-backend/.env` 파일을 생성하고 아래 값을 채워주세요.
 
@@ -126,15 +135,15 @@ DB_PASSWORD=
 DB_NAME=
 ```
 
-#### 2. 백엔드 실행
+#### 3. 백엔드 + 나머지 인프라 실행
 
 ```bash
 cd letzcollab-backend
 ./gradlew bootJar
-docker compose up -d     # 스프링 부트 앱, PostgreSQL, Redis, MailHog, Prometheus, Grafana 컨테이너 실행
+docker compose up --build -d     # 스프링 부트 앱, PostgreSQL, Redis, MailHog, Prometheus, Grafana 컨테이너 실행
 ```
 
-### 3. 프론트엔드 실행
+### 4. 프론트엔드 실행
 
 ```bash
 cd letzcollab-frontend
@@ -151,13 +160,10 @@ npm run dev
 
 ### 3.1. 아키텍처 다이어그램
 
-<img width="1666" alt="Image" src="https://github.com/user-attachments/assets/64f028fe-46b9-43b8-9ec6-69ddd6ac281f" />
+<img width="1794" alt="Image" src="https://github.com/user-attachments/assets/fe947ab8-87ad-44d6-ad19-d29c93d1b89d" />
 
 - NGINX를 리버스 프록시로 설정하여, 리액트 정적 파일 서빙과 `/api/*` 백엔드 라우팅을 분리
 - Let's Encrypt + Certbot으로 SSL 인증서를 발급하여 NGINX 서버에 HTTPS를 적용
-- Postfix(SMTP 서버)를 사용해서 자체 이메일 발송 인프라를 구축
-  - Certbot으로 발급받은 SSL 인증서를 Postfix 컨테이너에 마운트
-  - DNS 설정 (SPF, DMARC) 완료
 
 ### 3.2. 논리적 데이터 아키텍처 및 권한 모델
 
@@ -339,7 +345,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 ---
 
-#### H. CI/CD 파이프라인 (GitHub Actions + Docker + 네이버 클라우드)
+#### H. CI/CD 파이프라인 (GitHub Actions + Docker + 오라클 클라우드)
 
 - `main` 브랜치 push를 트리거로 3단계 파이프라인 자동 실행
     1. **Test** : `spring.profiles.active=test` 프로파일로 전체 테스트 실행, 실패 시 배포 중단
@@ -531,7 +537,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 > - DB 컨테이너: CPU 2코어 / RAM 2GB 
 > - k6 가상 사용자 300명, 2분 실행
 
-> **데이터 규모:** 총 75개 워크스페이스
+> **데이터 규모:** 총 75개 워크스페이스 (가상 사용자 4명당 1개의 워크스페이스)
 > - 데이터 불균형을 위해 대규모 소규모로 나눔
 > - 대규모 워크스페이스 26개: 프로젝트 500개 × 업무 40개
 > - 소규모 워크스페이스 49개: 프로젝트 3개 × 업무 3개
