@@ -1,5 +1,6 @@
 package xyz.letzcollab.backend.global.scheduler;
 
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -14,6 +15,7 @@ import java.time.LocalDate;
 @Slf4j
 public class WorkspaceStatsScheduler {
 
+	private final EntityManager entityManager;
 	private final WorkspaceStatsSnapshotRepository snapshotRepository;
 
 	private static final long FIXED_DELAY = 4 * 60 * 1000L; // 직전 스냅샷 생성 실행 종료 후 4분 뒤 실행 (실행 시간이 길어져도 중복 실행 방지)
@@ -25,6 +27,7 @@ public class WorkspaceStatsScheduler {
 		long start = System.currentTimeMillis();
 		log.info("워크스페이스 통계 스냅샷 생성/수정 시도");
 		try {
+			entityManager.createNativeQuery("SET LOCAL work_mem = '192MB'").executeUpdate();
 			snapshotRepository.updateSnapshots(LocalDate.now());
 			long end = System.currentTimeMillis() - start;
 			log.info("워크스페이스 통계 스냅샷 생성/수정 성공, 소요시간: {}ms", end);
