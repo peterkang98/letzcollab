@@ -519,7 +519,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 - **배치 집계 쿼리를 단일 네이티브 SQL로 통합**
     - 기존: 프로젝트 통계(5개 SUM CASE WHEN) + 업무 통계(`Task JOIN Project` + 6개 SUM CASE WHEN) + 멤버 수 조회 → **매 요청마다 3개 쿼리 발생**
     - 개선: 전체 워크스페이스 통계를 단일 UPSERT 쿼리로 일괄 집계
-    - PostgreSQL DB 설정 `work_mem=128MB`으로 배치 집계 연산 성능 최적화
+    - 해당 트랜잭션에만 `work_mem=192MB` 설정으로 배치 집계 연산 성능 최적화
 - **`WorkspaceStatsScheduler`** 로 4분 주기 스냅샷 자동 갱신
     - 실시간 집계 없이 캐시된 스냅샷만으로 조회 응답 처리
     - 스냅샷 생성일시를 프론트엔드에 노출하여 데이터 최신성 확인 가능
