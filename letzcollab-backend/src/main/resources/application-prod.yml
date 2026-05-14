@@ -14,18 +14,21 @@ spring:
     hibernate:
       ddl-auto: update
   mail:
-    host: mail
-    port: 25
+    host: ${SMTP_HOST}
+    port: ${SMTP_PORT}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
     properties:
       mail:
         smtp:
-          auth: false
+          auth: true
           starttls:
-            enable: false
-            required: false
+            enable: true
+            required: true
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
+
   data:
     redis:
       host: letzcollab-redis
