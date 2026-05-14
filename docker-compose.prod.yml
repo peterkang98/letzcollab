@@ -13,10 +13,8 @@ services:
     command: [
       "postgres",
       # 디스크에서 자주 읽는 데이터를 메모리에 캐싱 (전체 DB 인스턴스가 공유)
-      "-c", "shared_buffers=256MB",
-      # 쿼리의 정렬이나 조인 연산을 위해 개별 연산 노드에 할당되는 메모리
-      "-c", "work_mem=64MB",
-      "-c", "effective_cache_size=1536MB"
+      "-c", "shared_buffers=1GB",
+      "-c", "effective_cache_size=3GB"
     ]
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
@@ -29,7 +27,7 @@ services:
       resources:
         limits:
           cpus: '1'
-          memory: 1536M
+          memory: 4G
 
   backend:
     image: ghcr.io/peterkang98/letzcollab/backend:latest
@@ -45,14 +43,14 @@ services:
       - .env
     environment:
       - TZ=Asia/Seoul
-      - JAVA_OPTS=-Xms512m -Xmx512m
+      - JAVA_OPTS=-Xms2048m -Xmx2048m
     networks:
       - letzcollab-net
     deploy:
       resources:
         limits:
           cpus: '1'
-          memory: 1G
+          memory: 3G
 
   redis:
     image: redis:7-alpine
@@ -67,7 +65,7 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 300M
+          memory: 512M
 
   frontend:
     image: ghcr.io/peterkang98/letzcollab/frontend:latest
@@ -92,7 +90,7 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 128M
+          memory: 512M
 
   certbot:
     image: certbot/certbot
@@ -100,26 +98,6 @@ services:
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-
-  mail:
-    image: boky/postfix:latest
-    container_name: letzcollab-mail
-    restart: always
-    environment:
-      - TZ=Asia/Seoul
-      - ALLOWED_SENDER_DOMAINS=mail.letzcollab.xyz
-      - POSTFIX_mynetworks=127.0.0.0/8 172.18.0.0/16
-      - POSTFIX_smtp_tls_security_level=may
-      - POSTFIX_smtp_tls_loglevel=1
-      # 인증서 경로
-      - POSTFIX_smtpd_tls_cert_file=/etc/letsencrypt/live/letzcollab.xyz/fullchain.pem
-      - POSTFIX_smtpd_tls_key_file=/etc/letsencrypt/live/letzcollab.xyz/privkey.pem
-      - POSTFIX_smtpd_use_tls=yes
-    volumes:
-      # 호스트의 ./certbot/conf 폴더를 컨테이너의 /etc/letsencrypt로 연결
-      - ./certbot/conf:/etc/letsencrypt:ro
-    networks:
-      - letzcollab-net
 
 networks:
   letzcollab-net:
