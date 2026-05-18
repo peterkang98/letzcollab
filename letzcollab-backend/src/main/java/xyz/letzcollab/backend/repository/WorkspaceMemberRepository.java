@@ -65,9 +65,10 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
 	@Query("SELECT wm FROM WorkspaceMember wm " +
 			"JOIN FETCH wm.user u " +
 			"JOIN FETCH wm.workspace w " +
+			"JOIN FETCH w.owner " +
 			"WHERE w.publicId = :workspacePublicId " +
 			"AND u.publicId IN (:requesterUserPublicId, :targetMemberUserPublicId)")
-	List<WorkspaceMember> findMembersWithWorkspace(
+	List<WorkspaceMember> findMembersWithWorkspaceAndOwner(
 			@Param("workspacePublicId") UUID workspacePublicId,
 			@Param("requesterUserPublicId") UUID requesterUserPublicId,
 			@Param("targetMemberUserPublicId")UUID targetMemberUserPublicId

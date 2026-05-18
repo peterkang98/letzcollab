@@ -178,7 +178,7 @@ public class WorkspaceMemberService {
 	public void transferOwnership(UUID requesterUserPublicId, UUID workspacePublicId, UUID targetMemberUserPublicId) {
 		if (requesterUserPublicId.equals(targetMemberUserPublicId)) throw new CustomException(CANNOT_TRANSFER_OWNERSHIP_TO_SELF);
 
-		List<WorkspaceMember> members = memberRepository.findMembersWithWorkspace(
+		List<WorkspaceMember> members = memberRepository.findMembersWithWorkspaceAndOwner(
 				workspacePublicId, requesterUserPublicId, targetMemberUserPublicId
 		);
 
@@ -187,9 +187,15 @@ public class WorkspaceMemberService {
 
 
 		Workspace workspace = requester.getWorkspace();
+		validateWorkspaceOwnership(requesterUserPublicId, workspace.getOwner());
+
 		workspace.transferOwnership(requester, targetMember);
 		log.info("소유권 이전 - workspaceId={}, requesterId={}, targetUserId={}",
 				workspacePublicId, requesterUserPublicId, targetMemberUserPublicId);
+	}
+
+	private void validateWorkspaceOwnership(UUID requesterUserPublicId, User owner) {
+		if (!owner.getPublicId().equals(requesterUserPublicId)) throw new CustomException(INSUFFICIENT_PERMISSION);
 	}
 
 	// 헬퍼 메소드
@@ -209,7 +215,7 @@ public class WorkspaceMemberService {
 		}
 	}
 
-	private static WorkspaceMember findMemberInList(List<WorkspaceMember> members, UUID userPublicId, ErrorCode errCode) {
+	private WorkspaceMember findMemberInList(List<WorkspaceMember> members, UUID userPublicId, ErrorCode errCode) {
 		return members.stream()
 					  .filter(m -> m.getUser().getPublicId().equals(userPublicId))
 					  .findFirst()
