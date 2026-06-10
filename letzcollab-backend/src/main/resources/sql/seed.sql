@@ -250,3 +250,99 @@ FROM (SELECT project_id, lead_id FROM projects WHERE name LIKE '기업형-프로
 CROSS JOIN generate_series(1, 40) AS t_idx;
 
 SELECT setval('tasks_seq', (SELECT MAX(task_id) FROM tasks));
+
+-- ============================================================
+-- 성능 테스트용 추가 알림 시드 데이터
+--
+-- 그룹 1 (user_id   1~300): 각 200개 → 1주일 휴가 복귀 시나리오
+-- 그룹 2 (user_id 301~600): 각  40개 → 바쁜 하루 시나리오
+-- 모든 추가 알림: is_read = false
+--
+-- 기존 알림 1,000,000건 이후 notification_id 1,000,001 부터
+-- ============================================================
+
+-- 그룹 1: user_id 1~300, 각 200개 unread (총 60,000건)
+INSERT INTO notifications (
+    notification_id, recipient_id, type, reference_type,
+    reference_id, parent_reference_id, message, is_read, created_at
+)
+SELECT
+    1000000 + ((user_idx - 1) * 200 + notif_seq) AS notification_id,
+    u.user_id,
+    (ARRAY[
+        'TASK_ASSIGNED',
+        'TASK_STATUS_CHANGED',
+        'TASK_REASSIGNED',
+         'TASK_DUE_SOON',
+         'TASK_OVERDUE',
+         'COMMENT_ADDED',
+         'COMMENT_REPLY_ADDED',
+         'PROJECT_MEMBER_ADDED',
+         'PROJECT_ROLE_CHANGED',
+         'PROJECT_MEMBER_REMOVED'
+    ])[((user_idx * 200 + notif_seq) % 10) + 1],
+    (ARRAY['TASK', 'PROJECT'])[((user_idx * 200 + notif_seq) % 2) + 1],
+    gen_random_uuid(),
+    CASE WHEN ((user_idx * 200 + notif_seq) % 4 = 0) THEN gen_random_uuid() ELSE NULL END,
+    (ARRAY[
+        '업무가 할당되었습니다',
+        '업무 상태가 변경되었습니다',
+        '업무 담당자가 변경되었습니다',
+        '업무 마감일이 임박합니다',
+        '업무가 마감일을 초과했습니다',
+        '댓글이 달렸습니다',
+        '대댓글이 달렸습니다',
+        '프로젝트에 초대되었습니다',
+        '프로젝트에서 권한이 변경되었습니다',
+        '프로젝트에서 강퇴되었습니다'
+    ])[((user_idx * 200 + notif_seq) % 10) + 1],
+    false,                                                              -- 전부 미확인
+    NOW() - ((user_idx * 200 + notif_seq) % 14 || ' days')::interval    -- 최근 14일 내 분산
+FROM generate_series(1, 300) AS user_idx
+CROSS JOIN generate_series(1, 200) AS notif_seq
+JOIN users u ON u.user_id = user_idx
+ON CONFLICT DO NOTHING;
+
+-- 그룹 2: user_id 301~600, 각 40개 unread (총 12,000건)
+INSERT INTO notifications (
+    notification_id, recipient_id, type, reference_type,
+    reference_id, parent_reference_id, message, is_read, created_at
+)
+SELECT
+    1060000 + ((user_idx - 301) * 40 + notif_seq) AS notification_id,
+    u.user_id,
+    (ARRAY[
+        'TASK_ASSIGNED',
+         'TASK_STATUS_CHANGED',
+         'TASK_REASSIGNED',
+         'TASK_DUE_SOON',
+         'TASK_OVERDUE',
+         'COMMENT_ADDED',
+         'COMMENT_REPLY_ADDED',
+         'PROJECT_MEMBER_ADDED',
+         'PROJECT_ROLE_CHANGED',
+         'PROJECT_MEMBER_REMOVED'
+    ])[((user_idx * 40 + notif_seq) % 10) + 1],
+    (ARRAY['TASK', 'PROJECT'])[((user_idx * 40 + notif_seq) % 2) + 1],
+    gen_random_uuid(),
+    CASE WHEN ((user_idx * 40 + notif_seq) % 4 = 0) THEN gen_random_uuid() ELSE NULL END,
+    (ARRAY[
+        '업무가 할당되었습니다',
+        '업무 상태가 변경되었습니다',
+        '업무 담당자가 변경되었습니다',
+        '업무 마감일이 임박합니다',
+        '업무가 마감일을 초과했습니다',
+        '댓글이 달렸습니다',
+        '대댓글이 달렸습니다',
+        '프로젝트에 초대되었습니다',
+        '프로젝트에서 권한이 변경되었습니다',
+        '프로젝트에서 강퇴되었습니다'
+    ])[((user_idx * 40 + notif_seq) % 10) + 1],
+    false,                                                              -- 전부 미확인
+    NOW() - ((user_idx * 40 + notif_seq) % 3 || ' days')::interval      -- 최근 3일 내 분산
+FROM generate_series(301, 600) AS user_idx
+CROSS JOIN generate_series(1, 40) AS notif_seq
+JOIN users u ON u.user_id = user_idx
+ON CONFLICT DO NOTHING;
+
+SELECT setval('notifications_seq', (SELECT MAX(notification_id) FROM notifications));
