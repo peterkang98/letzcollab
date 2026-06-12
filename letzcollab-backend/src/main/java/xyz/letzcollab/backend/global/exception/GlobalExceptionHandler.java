@@ -3,6 +3,7 @@ package xyz.letzcollab.backend.global.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -12,6 +13,7 @@ import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import xyz.letzcollab.backend.global.dto.ApiResponse;
 import xyz.letzcollab.backend.global.exception.dto.ValidationError;
@@ -27,6 +29,7 @@ public class GlobalExceptionHandler {
 		log.warn("커스텀 예외 발생: {} - {}", errorCode.getCode(), e.getMessage());
 
 		return ResponseEntity.status(errorCode.getStatus())
+							 .contentType(MediaType.APPLICATION_JSON)
 							 .body(ApiResponse.fail(errorCode));
 	}
 
@@ -34,18 +37,21 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(BadCredentialsException.class)
 	public ResponseEntity<ApiResponse<Void>> handleBadCredentialsException(BadCredentialsException e) {
 		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+							 .contentType(MediaType.APPLICATION_JSON)
 							 .body(ApiResponse.fail(ErrorCode.BAD_CREDENTIALS));
 	}
 
 	@ExceptionHandler(DisabledException.class)
 	public ResponseEntity<ApiResponse<Void>> handleDisabledException(DisabledException e) {
 		return ResponseEntity.status(HttpStatus.FORBIDDEN)
+							 .contentType(MediaType.APPLICATION_JSON)
 							 .body(ApiResponse.fail(ErrorCode.DISABLED));
 	}
 
 	@ExceptionHandler(LockedException.class)
 	public ResponseEntity<ApiResponse<Void>> handleLockedException(LockedException e) {
 		return ResponseEntity.status(HttpStatus.FORBIDDEN)
+							 .contentType(MediaType.APPLICATION_JSON)
 							 .body(ApiResponse.fail(ErrorCode.LOCKED));
 	}
 	// ----
@@ -61,6 +67,7 @@ public class GlobalExceptionHandler {
 
 		log.warn("검증 또는 바인딩 실패: {}", errMsgList);
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+							 .contentType(MediaType.APPLICATION_JSON)
 							 .body(ApiResponse.fail(ErrorCode.INVALID_INPUT_VALUE, errMsgList));
 	}
 
@@ -69,6 +76,7 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
 		log.warn("JSON 파싱 실패 또는 잘못된 형식의 요청: {}", e.getMessage());
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+							 .contentType(MediaType.APPLICATION_JSON)
 							 .body(ApiResponse.fail(ErrorCode.INVALID_JSON_FORMAT));
 	}
 
@@ -77,6 +85,7 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ApiResponse<Void>> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
 		log.warn("메소드 인자 타입 불일치: {} - {}", e.getName(), e.getValue());
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+							 .contentType(MediaType.APPLICATION_JSON)
 							 .body(ApiResponse.fail(ErrorCode.INVALID_TYPE_VALUE));
 	}
 
@@ -85,14 +94,20 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ApiResponse<Void>> handleDataAccessException(DataAccessException e) {
 		log.error("데이터 저장소 오류 발생: {}", e.getMessage(), e);
 		return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+							 .contentType(MediaType.APPLICATION_JSON)
 							 .body(ApiResponse.fail(ErrorCode.DAO_ERROR));
 	}
+
+	// SSE 연결 종료 등
+	@ExceptionHandler(AsyncRequestNotUsableException.class)
+	public void handleAsyncRequestNotUsableException(AsyncRequestNotUsableException e) {}
 
 	// 그 외 예상치 못한 모든 예외
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
 		log.error("처리되지 않은 예외 발생: {}", e.getMessage(), e);
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+							 .contentType(MediaType.APPLICATION_JSON)
 							 .body(ApiResponse.fail(ErrorCode.INTERNAL_SERVER_ERROR));
 	}
 }
