@@ -43,4 +43,17 @@ public class AsyncConfig {
 		executor.initialize();
 		return executor;
 	}
+
+	@Bean(name = "sseHeartbeatExecutor")
+	public Executor sseHeartbeatExecutor() {
+		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+		executor.setCorePoolSize(5);
+		executor.setMaxPoolSize(20);
+		executor.setQueueCapacity(600);
+		executor.setThreadNamePrefix("sseHeartbeat-");
+
+		executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+		executor.initialize();
+		return executor;
+	}
 }
