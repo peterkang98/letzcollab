@@ -10,7 +10,12 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.annotation.Transactional;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 import xyz.letzcollab.backend.TestAuditConfig;
 import xyz.letzcollab.backend.dto.notification.NotificationResponse;
 import xyz.letzcollab.backend.entity.Notification;
@@ -33,17 +38,27 @@ import static xyz.letzcollab.backend.global.exception.ErrorCode.NOTIFICATION_NOT
 @ActiveProfiles("test")
 @Import(TestAuditConfig.class)
 @DisplayName("NotificationService 통합 테스트")
+@Testcontainers
 class NotificationServiceTest {
 
 	@Autowired NotificationService notificationService;
 	@Autowired NotificationRepository notificationRepository;
 	@Autowired UserRepository userRepository;
 
+	@Container
+	private static GenericContainer<?> redis = new GenericContainer<>("redis:7-alpine").withExposedPorts(6379);
+
 	private User recipient;
 	private User otherUser;
 
 	private static final UUID SAMPLE_REFERENCE_ID = UUID.randomUUID();
 	private static final UUID SAMPLE_PARENT_REFERENCE_ID = UUID.randomUUID();
+
+	@DynamicPropertySource
+	private static void redisProperties(DynamicPropertyRegistry registry) {
+		registry.add("spring.data.redis.host", redis::getHost);
+		registry.add("spring.data.redis.port", redis::getFirstMappedPort);
+	}
 
 	@BeforeEach
 	void setUp() {
