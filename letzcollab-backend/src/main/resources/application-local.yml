@@ -39,3 +39,9 @@ management:
   endpoint:
     health:
       show-details: always
+
+
+logging:
+  level:
+    xyz.letzcollab.backend: DEBUG
+    root: INFO

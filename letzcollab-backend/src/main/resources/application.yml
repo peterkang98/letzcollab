@@ -12,6 +12,7 @@ spring:
     properties:
       hibernate:
         default_batch_fetch_size: 100
+    open-in-view: false
 
   mail:
     host: localhost
@@ -42,3 +43,7 @@ springdoc:
 server:
   servlet:
     context-path: /api
+  tomcat:
+    threads:
+      max: 600
+      min-spare: 100

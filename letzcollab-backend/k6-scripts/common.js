@@ -6,11 +6,13 @@ export const tokens = new SharedArray('user tokens',
   () => open('../tokens.txt').split('\n').filter(t => t.trim().length > 0));
 export const workspaceIds = new SharedArray('workspace ids',
   () => open('../workspacePublicIds.txt').split('\n').filter(t => t.trim().length > 0));
+export const projectIds = new SharedArray('project ids',
+  () => open('../projectPublicIds.txt').split('\n').filter(t => t.trim().length > 0));
 
 export function commonSetup() {
-  console.log(`로드 완료: 토큰 ${tokens.length}개 / 워크스페이스ID ${workspaceIds.length}개`);
+  console.log(`로드 완료: 토큰 ${tokens.length}개 / 워크스페이스ID ${workspaceIds.length}개 / 프로젝트ID ${projectIds.length}개`);
   // 데이터 개수가 맞지 않으면 경고 출력
-  if (tokens.length !== workspaceIds.length) {
+  if (tokens.length !== workspaceIds.length && workspaceIds.length !== projectIds.length) {
     console.warn('경고: 토큰과 워크스페이스 ID의 개수가 일치하지 않습니다!');
   }
 }

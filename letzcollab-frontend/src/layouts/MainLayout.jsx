@@ -1,12 +1,14 @@
-import { Badge, Button, Drawer, Flex, Grid, Layout, Typography } from 'antd';
+import { Badge, Button, Drawer, Flex, Grid, Layout, Typography, notification } from 'antd';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { BellOutlined, FolderOpenFilled, MenuOutlined } from '@ant-design/icons';
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import api from '../api/axios.js';
 import NotificationDrawer from "../components/sidebar/NotificationDrawer.jsx";
 import SidebarContent from "../components/sidebar/SidebarContent.jsx";
 import { WorkspaceProvider } from "../contexts/WorkspaceContext.jsx";
+import { useNotificationSSE } from "../hooks/useNotificationSSE.js";
+import { NOTIFICATION_TYPE_CONFIG, buildNotifLink } from '../constants/notificationConfig.js';
+
 
 const { Sider, Header, Content } = Layout;
 const { Text } = Typography;
@@ -23,19 +25,11 @@ export default function MainLayout() {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-
-  const { data: unreadCount = 0 } = useQuery({
-    queryKey: ['notifications', 'unread-count'],
-    queryFn: async () => {
-      const res = await api.get('/notifications/unread-count');
-      return res.data.data ?? 0;
-    },
-    staleTime: 0,
-    refetchInterval: 1000 * 30,         // 30초마다 polling
-    refetchIntervalInBackground: false, // 탭 비활성 시 polling 중단
-  });
+  const { unreadCount, latestNotification, clearLatestNotification, disconnect } = useNotificationSSE();
 
   const handleLogout = async () => {
+    disconnect();
+
     try {
       await api.post('/auth/logout');
     } catch (e) {
@@ -61,6 +55,35 @@ export default function MainLayout() {
     onNotifOpen: () => setIsNotifOpen(true),
     onLogout: handleLogout,
   };
+
+  useEffect(() => {
+    if (!latestNotification) return;
+
+    const typeInfo = NOTIFICATION_TYPE_CONFIG[latestNotification.type] ?? {};
+    const link = buildNotifLink(latestNotification);
+
+    notification.open({
+      title: latestNotification.message,
+      description: typeInfo.label,
+      icon: <BellOutlined style={{ color: '#1677ff' }} />,
+      placement: 'topRight',
+      duration: 10,
+      actions: link ? (
+        <Button
+          type="primary"
+          size="small"
+          onClick={() => {
+            notification.destroy();
+            nav(link);
+          }}
+        >
+          바로가기
+        </Button>
+      ) : undefined,
+    });
+    // 팝업 띄운 후 다음 알림을 받을 수 있도록 초기화
+    clearLatestNotification();
+  }, [latestNotification, clearLatestNotification, nav]);
 
   return (
     <WorkspaceProvider>

@@ -8,15 +8,21 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
+import xyz.letzcollab.backend.dto.project.ProjectResponse;
+import xyz.letzcollab.backend.dto.project.ProjectSearchCond;
 import xyz.letzcollab.backend.dto.workspace.WorkspaceResponse;
 import xyz.letzcollab.backend.entity.User;
 import xyz.letzcollab.backend.repository.UserRepository;
+import xyz.letzcollab.backend.service.ProjectService;
 import xyz.letzcollab.backend.service.WorkspaceService;
 
 import javax.crypto.SecretKey;
 import java.io.PrintWriter;
 import java.util.Date;
+import java.util.Random;
 
 @Tag("data-generation")
 @SpringBootTest
@@ -27,6 +33,9 @@ public class LoadTestDataGenerator {
 
 	@Autowired
 	WorkspaceService workspaceService;
+
+	@Autowired
+	private ProjectService projectService;
 
 	private final SecretKey key;
 	private static final long accessTokenValidityInMs = 1000L * 60 * 60 * 24 * 60;	// 2개월
@@ -71,6 +80,29 @@ public class LoadTestDataGenerator {
 				WorkspaceResponse firstWorkspace = workspaceService.getMyWorkspaces(user.getPublicId()).getFirst();
 				String workspacePublicId = firstWorkspace.publicId().toString();
 				writer.println(workspacePublicId);
+			}
+		}
+	}
+
+	@Test
+	void generateProjectPublicIds() throws Exception {
+		Random rand = new Random();
+
+		try (PrintWriter writer = new PrintWriter("projectPublicIds.txt")) {
+			for (int i = 1; i <= 2000; i++) {
+				String email = "loadtest" + i + "@letzcollab.xyz";
+
+				User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("유저를 찾을 수 없음"));
+				WorkspaceResponse firstWorkspace = workspaceService.getMyWorkspaces(user.getPublicId()).getFirst();
+				Page<ProjectResponse> projects = projectService.getMyProjects(
+						user.getPublicId(),
+						firstWorkspace.publicId(),
+						new ProjectSearchCond(null, null), PageRequest.of(0, 10)
+				);
+
+				int randomNum = rand.nextInt(3);
+				String projectPubId = projects.getContent().get(randomNum).publicId().toString();
+				writer.println(projectPubId);
 			}
 		}
 	}

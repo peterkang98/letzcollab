@@ -1,5 +1,6 @@
 package xyz.letzcollab.backend.global.security;
 
+import jakarta.servlet.DispatcherType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -43,6 +44,7 @@ public class SecurityConfig {
 			.csrf(AbstractHttpConfigurer::disable)
 			.formLogin(AbstractHttpConfigurer::disable)
 			.authorizeHttpRequests(auth -> {
+				auth.dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll(); // 비동기 내부 디스패치(SSE 종료 등) 요청은 무조건 통과
 				auth.requestMatchers("/v1/auth/logout").authenticated();
 				auth.requestMatchers(
 						"/v1/auth/**",

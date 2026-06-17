@@ -43,14 +43,14 @@ services:
       - .env
     environment:
       - TZ=Asia/Seoul
-      - JAVA_OPTS=-Xms2048m -Xmx2048m
+      - JAVA_OPTS=-Xms4096m -Xmx4096m
     networks:
       - letzcollab-net
     deploy:
       resources:
         limits:
           cpus: '1'
-          memory: 3G
+          memory: 6G
 
   redis:
     image: redis:7-alpine
@@ -65,7 +65,7 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 512M
+          memory: 1G
 
   frontend:
     image: ghcr.io/peterkang98/letzcollab/frontend:latest
