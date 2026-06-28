@@ -19,6 +19,10 @@
 
 <img width="2006" alt="Image" src="https://github.com/user-attachments/assets/fb4f748a-113f-41f4-bffd-42af056350c1" />
 
+> 실시간 알림 기능
+
+<img width="1900" alt="Image" src="https://github.com/user-attachments/assets/66d24d76-c169-4179-8d3f-64ce7935095d" />
+
 > 워크스페이스 설정 페이지
 
 <img width="3150" alt="Image" src="https://github.com/user-attachments/assets/e378bb0f-d72f-4392-a124-e236bd460a43" />
@@ -160,7 +164,7 @@ npm run dev
 
 ### 3.1. 아키텍처 다이어그램
 
-<img width="1794" alt="Image" src="https://github.com/user-attachments/assets/fe947ab8-87ad-44d6-ad19-d29c93d1b89d" />
+<img width="2042" alt="Image" src="https://github.com/user-attachments/assets/16870cd2-ea8d-48eb-ba03-45292fe4320c" />
 
 - NGINX를 리버스 프록시로 설정하여, 리액트 정적 파일 서빙과 `/api/*` 백엔드 라우팅을 분리
 - Let's Encrypt + Certbot으로 SSL 인증서를 발급하여 NGINX 서버에 HTTPS를 적용
@@ -246,7 +250,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 ---
 
-#### B. 플랫폼 내부 알림 시스템 구현 (이벤트 + 스케줄러)
+#### B. 플랫폼 내부 실시간 알림 시스템 구현 (이벤트 + 스케줄러)
 
 알림은 두 가지 경로로 생성됩니다.
 
@@ -256,7 +260,8 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
     - (마감 1일 전 업무 + 마감 초과 미완료 업무)에 대한 알림을 생성
     - 담당자/보고자가 다른 경우 양쪽 모두에게 발송
 
-> **알림 정리 스케줄러** (매일 새벽 4시): 읽음 처리 후 30일 경과한 알림을 벌크 삭제하여 테이블 비대화 방지
+> - **프론트엔드로 로그인 시 SSE 구독이 완료되고, 알림 발생 시 실시간으로 팝업 형식으로 보여주도록 처리했습니다.**
+> - **알림 정리 스케줄러** (매일 새벽 4시): 읽음 처리 후 30일 경과한 알림을 벌크 삭제하여 테이블 비대화 방지
 
 ---
 
@@ -302,7 +307,7 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 ---
 
-#### E. 비동기 이메일 서비스 및 남용 방지 (Rate Limiting)
+#### E. 비동기 이메일 서비스 및 남용 방지(Rate Limiting)
 
 - `EmailContext` 인터페이스(`getTemplateName()`, `getSubject()`, `getVariables()`)를 전략 패턴으로 설계
     - `VerifyEmailContext`, `PasswordResetEmailContext` 등: 각 이메일 유형을 record로 작성하고 인터페이스를 `EmailContext` 구현
@@ -465,12 +470,13 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 ### Notification
 
-| 메소드   | Endpoint                               | 설명             | 인증 |
-|-------|----------------------------------------|----------------|----|
-| GET   | `/notifications`                       | 알림 목록 조회 (페이징) | 🔒 |
-| GET   | `/notifications/unread-count`          | 읽지 않은 알림 개수 조회 | 🔒 |
-| PATCH | `/notifications/{notificationId}/read` | 단건 알림 읽음 처리    | 🔒 |
-| PATCH | `/notifications/read-all`              | 전체 알림 읽음 처리    | 🔒 |
+| 메소드   | Endpoint                               | 설명                                          | 인증 |
+|-------|----------------------------------------|---------------------------------------------|----|
+| GET   | `/notifications`                       | 알림 목록 조회 (페이징)                              | 🔒 |
+| GET   | `/notifications/unread-count`          | 읽지 않은 알림 개수 조회                              | 🔒 |
+| GET   | `/notifications/subscribe`             | 실시간 알림 수신용 SSE 구독<br>(초기 값으로 미확인 알림 개수를 받음) | 🔒 |
+| PATCH | `/notifications/{notificationId}/read` | 단건 알림 읽음 처리                                 | 🔒 |
+| PATCH | `/notifications/read-all`              | 전체 알림 읽음 처리                                 | 🔒 |
 
 ### My
 
@@ -552,6 +558,49 @@ Let'z Collab은 세밀한 역할 기반 권한 제어(RBAC)를 통해 보안을 
 
 > → 평균 응답 속도 **약 97.8% 단축**, 처리량 **약 40% 증가**
 
+### 3. 알림 조회 기능 및 성능 개선 (Polling → SSE + Redis)
+
+기존에는 프론트엔드에서 알림 뱃지 숫자를 업데이트하기 위해 30초 주기로 미확인 알림 개수를 polling 하여, 실제 알림 발생 여부와 무관하게 불필요한 DB 쿼리와 HTTP 요청이 지속적으로 발생했고 알림의 실시간성이 부족했습니다.
+
+#### 개선 과정
+
+- **SSE(Server-Sent Events) 도입**으로 실시간 알림 기능 구현
+    - `GET /api/v1/notifications/subscribe` 엔드포인트 추가
+      - 구독 즉시 `init` 이벤트로 현재 미확인 알림 개수를 전송
+    - `SseEmitterService`에서 `ConcurrentHashMap<UUID, SseEmitter>`로 사용자별 연결 관리
+    - `SseHeartbeatScheduler`로 30초 주기 heartbeat 전송하여 연결 유지
+    - `NotificationEventListener`에서 알림 저장 후 해당 수신자가 SSE 구독이 되어있다면 즉시 `SseEmitterService.send()` 호출
+      - 알림 내용과 미확인 알림 개수를 SSE로 즉시 전달 → 프론트엔드에서 팝업 노출
+- **Redis 카운터 캐싱**으로 불필요한 DB 쿼리 제거
+    - `StringRedisTemplate`으로 미확인 알림 수를 카운터 방식으로 관리
+    - 캐시 HIT 시 Redis만 조회, MISS 시 DB COUNT 쿼리 실행 후 캐시에 적재
+    - 알림 발생/확인 시 `INCR` / `DECR`로 카운터 갱신 → DB COUNT 쿼리 최소화
+- **Nginx 및 Spring 설정 보완**
+    - `proxy_buffering off`, `proxy_read_timeout 10h` 등 SSE 엔드포인트 전용 Nginx 설정 추가
+    - `spring.jpa.open-in-view: false`로 SSE 장기 연결이 DB 커넥션을 점유하지 않도록 설정
+    - 톰캣 설정 `max-threads=600`으로 대규모 SSE 연결 수용
+
+#### 성능 개선 결과
+> **테스트 조건:**
+> - 백엔드 컨테이너: CPU 2코어 / RAM 1GB
+> - DB 컨테이너: CPU 2코어 / RAM 2GB
+> - Redis 컨테이너: CPU 1코어 / RAM 512MB
+> - k6 가상 사용자 400명, 3.5분 실행 (30명으로 warm up)
+
+> **데이터 규모:** 
+> - 300명은 미확인 알림 200개
+> - 100명은 미확인 알림 40개
+
+| 지표                     | Polling (개선 전) | SSE (개선 후)   | 개선율         |
+|:-----------------------|:---------------|:-------------|:------------|
+| 총 요청 수 (http_reqs)     | 4,030건         | 430건         | **▼ 89%**   |
+| 95% 응답 속도 (p95)        | 840.5 ms       | 187 ms       | **▼ 78%**   |
+| 수신 데이터 (data_received) | 2.1 MB         | 195 KB       | **▼ 90.7%** |
+| 서버 평균 CPU              | 11.2%          | 1.2%         | **▼ 89.3%** |
+| HikariCP 커넥션 획득 수      | 4,080건         | 0건 (캐싱 완료 후) | **▼ 100%**  |
+
+> → 불필요한 HTTP 요청 **89% 감소**, DB 커넥션 획득 **100% 제거**, 알림 수신 지연 제거
+
 ---
 
 ## 7. 프로젝트 구조
@@ -622,7 +671,8 @@ letzcollab/
 │       │   └── WorkspaceContext.jsx     # 선택한 워크스페이스의 publicId + 내 권한 컨텍스트
 │       ├── hooks/
 │       │   ├── useCurrentUser.js        # 로그인 사용자 정보 조회 훅
-│       │   └── useMyProjectRole.js      # 내 프로젝트 역할 조회 훅
+│       │   ├── useMyProjectRole.js      # 내 프로젝트 역할 조회 훅
+│       │   └── useNotificationSSE.js    # 알림 수신용 SSE 관리 훅
 │       ├── layouts/
 │       │   ├── AuthLayout.jsx           # 인증 관련 페이지 레이아웃
 │       │   └── MainLayout.jsx           # 로그인 후 메인 페이지 레이아웃 (사이드바, 반응형)
@@ -680,6 +730,7 @@ letzcollab/
             │   ├── TaskService.java
             │   ├── TaskCommentService.java
             │   ├── NotificationService.java
+            │   ├── NotifCntCacheService.java
             │   └── MyService.java                  # 내 업무 조회 서비스
             ├── repository/              # JPA + QueryDSL + Redis
             │   ├── redis/
@@ -777,7 +828,8 @@ letzcollab/
             │   │   ├── CommentResponse.java
             │   │   └── ReplyResponse.java
             │   └── notification/
-            │       └── NotificationResponse.java
+            │       ├── NotificationResponse.java
+            │       └── NotificationSseEvent.java
             ├── global/
             │   ├── config/
             │   │   ├── AsyncConfig.java         # 비동기 처리 활성화 + 커스텀 쓰레드 풀 정의
@@ -825,7 +877,10 @@ letzcollab/
             │   ├── scheduler/
             │   │   ├── CleanupScheduler.java                 # 오래된 알림/인증 토큰/초대장 정리
             │   │   ├── WorkspaceStatsScheduler.java          # 워크스페이스 통계 생성
+            │   │   ├── SseHeartbeatScheduler.java
             │   │   └── TaskDeadlineScheduler.java            # 업무 마감 알림 발송
+            │   ├── sse/
+            │   │   └── SseEmitterService.java
             │   └── security/
             │       ├── jwt/
             │       │   ├── JwtAuthenticationEntryPoint.java  # 미인증 요청 진입 시 401 응답 처리
